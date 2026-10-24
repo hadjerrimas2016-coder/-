@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global hardened helpers
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Exclusive admin authority for the site owner
+    function isAdmin() {
+      return isVerified() && (
+        request.auth.token.email == 'hadjerrimas2016@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Story schema validator
+    function isValidStory(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.category is string && data.category.size() > 0 && data.category.size() <= 50 &&
+             data.coverImage is string && data.coverImage.size() > 0 && data.coverImage.size() <= 1000 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.moralLesson is string && data.moralLesson.size() <= 1000 &&
+             data.authorEmail is string && data.authorEmail.size() <= 200;
+    }
+
+    // Picture Book schema validator
+    function isValidPictureBook(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.coverImage is string && data.coverImage.size() > 0 && data.coverImage.size() <= 1000 &&
+             data.moralLesson is string && data.moralLesson.size() <= 1000 &&
+             data.authorEmail is string && data.authorEmail.size() <= 200;
+    }
+
+    // Sunnah items (Surahs and Duas) schema validator
+    function isValidSunnah(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.type is string && (data.type in ['surah', 'duaa', 'dhikr']) &&
+             data.arabicText is string && data.arabicText.size() > 0 && data.arabicText.size() <= 4000 &&
+             data.authorEmail is string && data.authorEmail.size() <= 200;
+    }
+
+    // Primary stories collection: Readable by children and visitors, controlled exclusively by Admin
+    match /stories/{storyId} {
+      allow get, list: if true;
+      allow create: if isValidId(storyId) && isAdmin() && isValidStory(incoming());
+      allow update: if isValidId(storyId) && isAdmin() && isValidStory(incoming());
+      allow delete: if isValidId(storyId) && isAdmin();
+    }
+
+    // Category-specific collections (in case admin partitions collections in console)
+    match /{categoryCollection}/{storyId} {
+      allow get, list: if categoryCollection in [
+        'stories_languages',
+        'stories_shahrazad',
+        'stories_knowledge',
+        'stories_heritage',
+        'stories_fantasy',
+        'stories_sleep',
+        'stories_sunnah'
+      ];
+      allow create, update: if categoryCollection in [
+        'stories_languages',
+        'stories_shahrazad',
+        'stories_knowledge',
+        'stories_heritage',
+        'stories_fantasy',
+        'stories_sleep',
+        'stories_sunnah'
+      ] && isValidId(storyId) && isAdmin() && isValidStory(incoming());
+      allow delete: if categoryCollection in [
+        'stories_languages',
+        'stories_shahrazad',
+        'stories_knowledge',
+        'stories_heritage',
+        'stories_fantasy',
+        'stories_sleep',
+        'stories_sunnah'
+      ] && isValidId(storyId) && isAdmin();
+    }
+
+    // Sunnah Corner collection (Short surahs and daily duas)
+    match /sunnah/{itemId} {
+      allow get, list: if true;
+      allow create: if isValidId(itemId) && isAdmin() && isValidSunnah(incoming());
+      allow update: if isValidId(itemId) && isAdmin() && isValidSunnah(incoming());
+      allow delete: if isValidId(itemId) && isAdmin();
+    }
+
+    // Picture Books collection: Readable by all, controlled exclusively by Admin
+    match /pictureBooks/{bookId} {
+      allow get, list: if true;
+      allow create: if isValidId(bookId) && isAdmin() && isValidPictureBook(incoming());
+      allow update: if isValidId(bookId) && isAdmin() && isValidPictureBook(incoming());
+      allow delete: if isValidId(bookId) && isAdmin();
+    }
+
+    // App settings (e.g., hero video configuration, custom domain info)
+    match /app_settings/{settingId} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+
+    // Admins metadata collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

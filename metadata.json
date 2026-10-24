@@ -1,0 +1,8 @@
+{
+  "name": "رائد - قصص وألعاب الأطفال التفاعلية",
+  "description": "منصة رائد التفاعلية لقصص الأطفال والرسم وتركيب الأشكال وركن الألعاب مع وضع نهاري بسحب ووضع ليلي بنجوم متلألئة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

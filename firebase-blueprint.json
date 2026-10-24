@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "Story": {
+      "title": "Story",
+      "description": "Children story published by the admin",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "subtitle": { "type": "string", "maxLength": 300 },
+        "category": { "type": "string", "maxLength": 50 },
+        "categoryLabel": { "type": "string", "maxLength": 100 },
+        "categoryIcon": { "type": "string", "maxLength": 50 },
+        "ageRange": { "type": "string", "maxLength": 50 },
+        "duration": { "type": "string", "maxLength": 30 },
+        "badge": { "type": "string", "maxLength": 50 },
+        "bannerImage": { "type": "string", "maxLength": 1000 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "highlightText": { "type": "string", "maxLength": 500 },
+        "moralLesson": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 },
+        "authorEmail": { "type": "string", "maxLength": 200 }
+      },
+      "required": ["title", "category", "coverImage", "description", "moralLesson", "authorEmail"]
+    },
+    "PictureBook": {
+      "title": "PictureBook",
+      "description": "Illustrated picture book for children with audio and tashkeel",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "subtitle": { "type": "string", "maxLength": 300 },
+        "badge": { "type": "string", "maxLength": 50 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "ageRange": { "type": "string", "maxLength": 50 },
+        "totalPages": { "type": "number" },
+        "creatorsAudioUrl": { "type": "string", "maxLength": 1000 },
+        "moralLesson": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 },
+        "authorEmail": { "type": "string", "maxLength": 200 }
+      },
+      "required": ["title", "coverImage", "moralLesson", "authorEmail"]
+    },
+    "SunnahItem": {
+      "title": "SunnahItem",
+      "description": "Short Surah, daily Duaa, or Dhikr for kids in Sunnah Corner",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "subtitle": { "type": "string", "maxLength": 300 },
+        "type": { "type": "string", "enum": ["surah", "duaa", "dhikr"] },
+        "category": { "type": "string", "maxLength": 50 },
+        "arabicText": { "type": "string", "maxLength": 4000 },
+        "translation": { "type": "string", "maxLength": 1000 },
+        "explanation": { "type": "string", "maxLength": 2000 },
+        "virtue": { "type": "string", "maxLength": 1000 },
+        "repeatCount": { "type": "number" },
+        "audioUrl": { "type": "string", "maxLength": 1000 },
+        "icon": { "type": "string", "maxLength": 50 },
+        "badge": { "type": "string", "maxLength": 50 },
+        "isDailyDuaa": { "type": "boolean" },
+        "isFavorite": { "type": "boolean" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 },
+        "authorEmail": { "type": "string", "maxLength": 200 }
+      },
+      "required": ["title", "type", "arabicText", "authorEmail"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Platform administrator record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 200 },
+        "role": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Published children stories readable by all, creatable and modifiable only by admin"
+    },
+    "/pictureBooks/{bookId}": {
+      "schema": "PictureBook",
+      "description": "Interactive picture books readable by all, creatable and modifiable only by admin"
+    },
+    "/sunnah/{itemId}": {
+      "schema": "SunnahItem",
+      "description": "Short surahs and daily duas in Sunnah Corner readable by all, creatable and modifiable only by admin"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Registered admins list readable and modifiable only by verified super admin"
+    }
+  }
+}

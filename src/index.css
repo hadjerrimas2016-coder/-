@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom whimsical animations for Day & Night Sky */
+@keyframes floatCloudSlow {
+  0% { transform: translateX(120vw); }
+  100% { transform: translateX(-40vw); }
+}
+
+@keyframes floatCloudMedium {
+  0% { transform: translateX(110vw); }
+  100% { transform: translateX(-35vw); }
+}
+
+@keyframes floatCloudFast {
+  0% { transform: translateX(115vw); }
+  100% { transform: translateX(-30vw); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes shootingStar {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-45deg) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-40px) translateY(40px) rotate(-45deg) scale(1);
+  }
+  30% {
+    opacity: 0;
+    transform: translateX(-180px) translateY(180px) rotate(-45deg) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-200px) translateY(200px) rotate(-45deg) scale(0);
+  }
+}
+
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes floatMascot {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+}
+
+.cloud-slow {
+  animation: floatCloudSlow 55s linear infinite;
+}
+
+.cloud-medium {
+  animation: floatCloudMedium 38s linear infinite;
+}
+
+.cloud-fast {
+  animation: floatCloudFast 26s linear infinite;
+}
+
+.twinkle-star {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.shooting-star-1 {
+  animation: shootingStar 7s ease-in-out infinite 1s;
+}
+
+.shooting-star-2 {
+  animation: shootingStar 9s ease-in-out infinite 4.5s;
+}
+
+.float-mascot {
+  animation: floatMascot 4s ease-in-out infinite;
+}
+
+.gentle-pulse {
+  animation: gentlePulse 2.5s ease-in-out infinite;
+}
+
+/* Hide scrollbar for tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
