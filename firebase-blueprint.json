@@ -79,6 +79,19 @@
         "updatedAt": { "type": "string", "maxLength": 100 }
       },
       "required": ["email", "role"]
+    },
+    "ReadingClubStory": {
+      "title": "ReadingClubStory",
+      "description": "Story published to Reading Club by kids and users",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "audioUrl": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["title", "content"]
     }
   },
   "firestore": {
@@ -93,6 +106,14 @@
     "/sunnah/{itemId}": {
       "schema": "SunnahItem",
       "description": "Short surahs and daily duas in Sunnah Corner readable by all, creatable and modifiable only by admin"
+    },
+    "/readingClubStories/{storyId}": {
+      "schema": "ReadingClubStory",
+      "description": "Public stories published in the reading club readable by all"
+    },
+    "/readingClubProfiles/{profileId}": {
+      "schema": "Admin",
+      "description": "Public user profiles in reading club"
     },
     "/admins/{adminId}": {
       "schema": "Admin",

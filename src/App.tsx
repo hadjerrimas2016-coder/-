@@ -28,6 +28,9 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { PictureBookModal } from './components/PictureBookModal';
 import { ReadingClub } from './components/ReadingClub';
 import { ForeignLanguagesCorner } from './components/ForeignLanguagesCorner';
+import { ShahrazadCorner } from './components/ShahrazadCorner';
+import { CookingCorner } from './components/CookingCorner';
+import { DEFAULT_COOKING_STORIES } from './data/cookingStoriesData';
 import { playSparkleSound } from './utils/audio';
 import {
   auth,
@@ -43,7 +46,15 @@ export default function App() {
   const [mode, setMode] = useState<AppMode>('night');
   const [currentTab, setCurrentTab] = useState<ActiveTab>('home');
   const [currentLang, setCurrentLang] = useState<SupportedLanguage>('ar');
-  const [stories, setStories] = useState<Story[]>(STORIES_DATA);
+  const [stories, setStories] = useState<Story[]>(() => {
+    const list = [...STORIES_DATA];
+    for (const cs of DEFAULT_COOKING_STORIES) {
+      if (!list.some((s) => s.id === cs.id)) {
+        list.push(cs);
+      }
+    }
+    return list;
+  });
   const [pictureBook, setPictureBook] = useState<PictureBook>(DEFAULT_PICTURE_BOOK);
   const [sunnahItems, setSunnahItems] = useState<SunnahItem[]>(DEFAULT_SUNNAH_ITEMS);
   const [heroVideo, setHeroVideo] = useState<HeroVideoSettings>(() => {
@@ -89,6 +100,11 @@ export default function App() {
         for (const defaultStory of STORIES_DATA) {
           if (!merged.some((s) => s.id === defaultStory.id)) {
             merged.push(defaultStory);
+          }
+        }
+        for (const cookingStory of DEFAULT_COOKING_STORIES) {
+          if (!merged.some((s) => s.id === cookingStory.id)) {
+            merged.push(cookingStory);
           }
         }
         setStories(merged);
@@ -420,6 +436,18 @@ export default function App() {
           />
         )}
 
+        {currentTab === 'shahrazad' && (
+          <ShahrazadCorner
+            mode={mode}
+            stories={stories}
+            onOpenStory={setActiveStory}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            onEarnStars={handleEarnStars}
+            onSaveUserRecording={handleSaveUserRecording}
+          />
+        )}
+
         {currentTab === 'reading_club' && (
           <ReadingClub
             mode={mode}
@@ -427,6 +455,19 @@ export default function App() {
             starsCount={starsCount}
             onEarnStars={handleEarnStars}
             currentUser={currentUser}
+          />
+        )}
+
+        {currentTab === 'cooking' && (
+          <CookingCorner
+            stories={stories}
+            mode={mode}
+            onOpenStory={setActiveStory}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            onEarnStars={handleEarnStars}
+            onSaveUserRecording={handleSaveUserRecording}
+            onOpenAdmin={() => setShowAdminPanel(true)}
           />
         )}
 
@@ -464,6 +505,20 @@ export default function App() {
           <ShapeBuilder
             mode={mode}
             onEarnStars={handleEarnStars}
+          />
+        )}
+
+        {currentTab === 'challenges' && (
+          <ChallengesMapModal
+            mode={mode}
+            onClose={() => setCurrentTab('home')}
+            starsCount={starsCount}
+            onEarnStars={handleEarnStars}
+            stories={stories}
+            onSelectStoryById={(id) => {
+              const found = stories.find((s) => s.id === id);
+              if (found) setActiveStory(found);
+            }}
           />
         )}
 
@@ -523,6 +578,9 @@ export default function App() {
         <ChallengesMapModal
           mode={mode}
           onClose={() => setShowChallengesMap(false)}
+          starsCount={starsCount}
+          onEarnStars={handleEarnStars}
+          stories={stories}
           onSelectStoryById={(id) => {
             const found = stories.find((s) => s.id === id);
             if (found) setActiveStory(found);
@@ -576,6 +634,7 @@ export default function App() {
           onEarnStars={handleEarnStars}
           onUpdateBook={handleSavePictureBook}
           onSaveUserRecording={handleSaveUserRecording}
+          existingRecordings={userRecordings}
         />
       )}
     </div>

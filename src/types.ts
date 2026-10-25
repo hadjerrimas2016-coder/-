@@ -2,8 +2,10 @@ export type AppMode = 'day' | 'night';
 
 export type ActiveTab = 
   | 'home' 
+  | 'cooking'
   | 'reading_club'
   | 'foreign_languages'
+  | 'shahrazad'
   | 'library'
   | 'games'
   | 'sunnah'
@@ -33,6 +35,7 @@ export interface Story {
     | 'sleep' 
     | 'languages'
     | 'foreign_languages'
+    | 'cooking'
     | 'sunnah';
   categoryLabel: string;
   categoryIcon: string;
@@ -41,11 +44,16 @@ export interface Story {
   badge?: string;
   bannerImage?: string;
   coverImage: string;
+  videoUrl?: string; // Optional video story (e.g. for cooking stories)
+  ingredients?: { name: string; amount?: string; emoji?: string }[];
+  recipeSteps?: string[];
+  prepTimeMinutes?: number;
   description: string;
   highlightText: string;
   progressPercent?: number;
   pages: {
     text: string;
+    tashkeelText?: string;
     imagePromptText?: string;
     pageImage?: string;
     interactiveElements?: {
@@ -121,6 +129,8 @@ export interface PictureBook {
   creatorsAudioUrl?: string; // Official MP3 track
   moralLesson: string;
   pages: PictureBookPage[];
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 export interface ShapeItem {
@@ -173,11 +183,14 @@ export interface Badge {
 export interface UserAudioRecording {
   id: string;
   title: string;
-  storyTitle: string;
-  pageNumber: number;
+  storyTitle?: string;
+  storyId?: string;
+  pageNumber?: number;
   createdAt: string;
   durationSec: number;
-  audioBlobUrl: string;
+  audioBlobUrl?: string;
+  audioUrl?: string;
+  scorePoints?: number;
 }
 
 export interface HeroVideoSettings {

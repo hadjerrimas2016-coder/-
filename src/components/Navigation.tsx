@@ -10,7 +10,10 @@ import {
   Shapes,
   User,
   Globe,
-  Users
+  Users,
+  Crown,
+  UtensilsCrossed,
+  Trophy
 } from 'lucide-react';
 import { playClickSound } from '../utils/audio';
 
@@ -24,6 +27,9 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ currentTab, onSelectTab, mode }) => {
   const tabs = [
     { id: 'home' as ActiveTab, label: 'الرئيسية', icon: Home },
+    { id: 'challenges' as ActiveTab, label: 'خريطة التحديات 🎯', icon: Trophy, badge: '3D' },
+    { id: 'cooking' as ActiveTab, label: 'قصص الطبخ 🍲', icon: UtensilsCrossed, badge: 'فيديو' },
+    { id: 'shahrazad' as ActiveTab, label: 'عالم شهرزاد 👸', icon: Crown, badge: 'ألف ليلة' },
     { id: 'reading_club' as ActiveTab, label: 'نادي القراءة 🎙️', icon: Users, badge: 'جديد' },
     { id: 'foreign_languages' as ActiveTab, label: 'قصص باللغات 🌍', icon: Globe },
     { id: 'library' as ActiveTab, label: 'المكتبة', icon: BookOpen },

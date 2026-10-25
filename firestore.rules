@@ -79,7 +79,8 @@ service cloud.firestore {
         'stories_heritage',
         'stories_fantasy',
         'stories_sleep',
-        'stories_sunnah'
+        'stories_sunnah',
+        'stories_cooking'
       ];
       allow create, update: if categoryCollection in [
         'stories_languages',
@@ -88,7 +89,8 @@ service cloud.firestore {
         'stories_heritage',
         'stories_fantasy',
         'stories_sleep',
-        'stories_sunnah'
+        'stories_sunnah',
+        'stories_cooking'
       ] && isValidId(storyId) && isAdmin() && isValidStory(incoming());
       allow delete: if categoryCollection in [
         'stories_languages',
@@ -97,8 +99,24 @@ service cloud.firestore {
         'stories_heritage',
         'stories_fantasy',
         'stories_sleep',
-        'stories_sunnah'
+        'stories_sunnah',
+        'stories_cooking'
       ] && isValidId(storyId) && isAdmin();
+    }
+
+    // Reading Club public stories published by children
+    match /readingClubStories/{storyId} {
+      allow get, list: if true;
+      allow create: if isValidId(storyId);
+      allow update: if isValidId(storyId);
+      allow delete: if isValidId(storyId) && (isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid));
+    }
+
+    // Reading Club public profiles for participating kids
+    match /readingClubProfiles/{profileId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(profileId);
+      allow delete: if isValidId(profileId) && isAdmin();
     }
 
     // Sunnah Corner collection (Short surahs and daily duas)

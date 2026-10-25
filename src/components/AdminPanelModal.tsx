@@ -35,10 +35,12 @@ import {
   ExternalLink,
   Film,
   Play,
-  RotateCcw
+  RotateCcw,
+  Zap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playSparkleSound, playClickSound, playPopSound, playFanfareSound } from '../utils/audio';
+import { InstantMultiStoryStudio } from './InstantMultiStoryStudio';
 import {
   auth,
   isOwnerAdmin,
@@ -85,7 +87,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [authError, setAuthError] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'firebaseGuide' | 'heroVideo' | 'manage' | 'create' | 'pictureBook' | 'sunnah' | 'rawStudio'>('firebaseGuide');
+  const [activeTab, setActiveTab] = useState<'firebaseGuide' | 'heroVideo' | 'manage' | 'create' | 'multiStories' | 'pictureBook' | 'sunnah' | 'rawStudio'>('firebaseGuide');
   const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [isSavingCloud, setIsSavingCloud] = useState(false);
   const [statusNotice, setStatusNotice] = useState('');
@@ -105,6 +107,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [duration, setDuration] = useState('08:00');
   const [badge, setBadge] = useState('قصة مميزة');
   const [coverImage, setCoverImage] = useState('/assets/aistudio/Capture_d__cran_2026-10-19_114332_ce58ab60.png');
+  const [storyVideoUrl, setStoryVideoUrl] = useState('');
   const [description, setDescription] = useState('');
   const [moralLesson, setMoralLesson] = useState('');
   const [page1Text, setPage1Text] = useState('');
@@ -281,6 +284,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setDuration(st.duration);
     setBadge(st.badge || 'مميز');
     setCoverImage(st.coverImage);
+    setStoryVideoUrl(st.videoUrl || '');
     setDescription(st.description);
     setMoralLesson(st.moralLesson);
     setPage1Text(st.pages[0]?.text || '');
@@ -308,6 +312,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setDuration('07:30');
     setBadge('جديد');
     setCoverImage('/assets/aistudio/Capture_d__cran_2026-10-19_114332_ce58ab60.png');
+    setStoryVideoUrl('');
     setDescription('');
     setMoralLesson('');
     setPage1Text('');
@@ -365,6 +370,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         duration,
         badge,
         coverImage: coverImage.trim() || '/assets/aistudio/28a8e0a2-a42a-4782-b1d2-b0be7b9319cf_ff9d2c6a.png',
+        videoUrl: storyVideoUrl.trim() || undefined,
         description: description.trim(),
         highlightText: 'قصة موثقة على منصة رائد',
         moralLesson: moralLesson.trim() || 'العلم والأخلاق الطيبة ينيران درب المستقبل.',
@@ -789,6 +795,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
               <button
                 onClick={() => {
+                  playSparkleSound();
+                  setActiveTab('multiStories');
+                }}
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'multiStories'
+                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 shadow'
+                    : 'hover:bg-white/10 text-amber-300'
+                }`}
+              >
+                <Zap className="w-4 h-4 fill-current" />
+                <span>⚡ نشر قصص متعددة فوراً</span>
+              </button>
+
+              <button
+                onClick={() => {
                   playClickSound();
                   setActiveTab('pictureBook');
                 }}
@@ -946,6 +967,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             title: 'ركن السُنّة (سور قصيرة وأهم الأدعية)',
                             icon: '🕌',
                             color: 'from-emerald-950/80 to-teal-900/50 border-emerald-400/50'
+                          },
+                          {
+                            id: 'stories_cooking',
+                            catKey: 'cooking',
+                            title: 'قصص ومغامرات الطبخ (فيديو ونص)',
+                            icon: '🍲',
+                            color: 'from-amber-900/60 to-rose-900/40 border-amber-500/40'
                           },
                           {
                             id: 'pictureBooks',
@@ -1163,18 +1191,172 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Structure of Book Entity */}
-                  <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/40 space-y-2">
-                    <h4 className="text-xs font-black text-amber-300 flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4" />
-                      <span>كيف يتكون نموذج الكتاب (Book Structure) في Firebase:</span>
-                    </h4>
-                    <ul className="text-xs space-y-1 text-purple-200/90 list-disc list-inside">
-                      <li><strong>title (string):</strong> عنوان الكتاب مثل "قصة ليان وسر الجوهرة المصونة".</li>
-                      <li><strong>totalPages (number):</strong> عدد الصفحات الممتدة (10 صفحات أو أكثر).</li>
-                      <li><strong>creatorsAudioUrl (string):</strong> رابط ملف الـ MP3 الصوتي المسجل بأصواتكم كصناع العمل.</li>
-                      <li><strong>pages (array of maps):</strong> مصفوفة من 10 كائنات، كل كائن يمثل صفحة بها نص مشكول وصورة ورقم الصفحة.</li>
-                    </ul>
+                  {/* Detailed Structure of Picture Book in Firebase Firestore */}
+                  <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-950/60 via-purple-950/60 to-black/60 border-2 border-amber-400/60 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-amber-400 text-amber-950 font-black text-sm">
+                          📖
+                        </span>
+                        <div>
+                          <h4 className="text-sm sm:text-base font-black text-amber-300">
+                            كيف تضيف قصة في الكتاب المصور في Firebase (ما هي القيم التي تكتبها؟):
+                          </h4>
+                          <span className="text-[11px] text-purple-200">
+                            دليل شامل للقيم وأنواع الحقول لمجموعة <code className="font-mono text-amber-300 font-bold">pictureBooks</code>
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sampleBookJson = JSON.stringify(
+                            {
+                              id: 'layan-jewel',
+                              title: 'قصة ليان وسر الجوهرة المصونة',
+                              subtitle: 'كتاب مصور تفاعلي بالصفحات والصوت',
+                              badge: 'كتاب مصور تفاعلي',
+                              coverImage: '/assets/aistudio/Capture_d__cran_2026-10-19_114332_ce58ab60.png',
+                              ageRange: '6 - 12 سنة',
+                              totalPages: 10,
+                              creatorsAudioUrl: '',
+                              moralLesson: 'الأمانة والعمل الصالح هما أثمن الجواهر في الحياة.',
+                              pages: [
+                                {
+                                  pageNumber: 1,
+                                  chapterTitle: 'المسير الصباحي نحو المدرسة',
+                                  image: '/assets/aistudio/Capture_d__cran_2026-10-19_114332_ce58ab60.png',
+                                  text: 'في صباح مشرق خرجت ليان بابتسامة تملأ وجهها نحو مدرستها.',
+                                  tashkeelText: 'فِي صَبَاحٍ مُشْرِقٍ خَرَجَتْ لَيَانُ بِابْتِسَامَةٍ تَمْلَأُ وَجْهَهَا نَحْوَ مَدْرَسَتِهَا.',
+                                  audioDuration: '00:45'
+                                }
+                              ]
+                            },
+                            null,
+                            2
+                          );
+                          copyToClipboard(sampleBookJson, 'book-json');
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center gap-1.5 transition-all shadow cursor-pointer"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>{copiedId?.includes('layan-jewel') ? 'تم نسخ قالب JSON! ✓' : 'نسخ قالب الكتاب المصور (JSON) 📋'}</span>
+                      </button>
+                    </div>
+
+                    {/* Step-by-Step explanation */}
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 rounded-xl bg-black/40 border border-amber-400/30 space-y-1.5">
+                        <div className="font-bold text-amber-300">
+                          1️⃣ اسم المجموعة (Collection ID):
+                        </div>
+                        <p className="text-purple-200">
+                          اكتب بالضبط: <code className="font-mono text-emerald-300 font-bold bg-black/50 px-2 py-0.5 rounded">pictureBooks</code>
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/40 border border-amber-400/30 space-y-1.5">
+                        <div className="font-bold text-amber-300">
+                          2️⃣ معرف المستند (Document ID):
+                        </div>
+                        <p className="text-purple-200">
+                          اكتب اسماً إنجليزياً مثل <code className="font-mono text-emerald-300 font-bold bg-black/50 px-2 py-0.5 rounded">layan-jewel</code> أو اضغط <em>"ID automatique"</em>.
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/40 border border-amber-400/30 space-y-2">
+                        <div className="font-bold text-amber-300">
+                          3️⃣ الحقول الإلزامية والقيم التي يجب كتابتها (Fields & Values):
+                        </div>
+                        
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-right text-xs">
+                            <thead className="bg-white/10 text-amber-300 font-bold text-[11px]">
+                              <tr>
+                                <th className="p-2">اسم الحقل (Champ)</th>
+                                <th className="p-2">نوع البيانات (Type)</th>
+                                <th className="p-2">ما تكتبه في خانة القيمة (Valeur)</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/10 font-mono text-purple-200 text-[11px]">
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">title</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300 font-sans">قصة ليان وسر الجوهرة المصونة</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">subtitle</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300 font-sans">كتاب مصور تفاعلي بالصفحات والصوت</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">badge</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300 font-sans">كتاب مصور تفاعلي</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">coverImage</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300">/assets/aistudio/Capture_d__cran_2026-10-19_114332_ce58ab60.png</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">ageRange</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300 font-sans">6 - 12 سنة</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">totalPages</td>
+                                <td className="p-2 text-amber-300">number</td>
+                                <td className="p-2 text-emerald-300">10</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">creatorsAudioUrl</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300">رابط MP3 الصوتي المسجل بأصواتكم (اختياري)</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">moralLesson</td>
+                                <td className="p-2 text-cyan-300">string</td>
+                                <td className="p-2 text-emerald-300 font-sans">الأمانة والعمل الصالح هما أثمن الجواهر في الحياة.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-amber-400 font-bold">pages</td>
+                                <td className="p-2 text-pink-300">array</td>
+                                <td className="p-2 text-emerald-300 font-sans">مصفوفة من 10 عناصر، كل عنصر عبارة عن (map) يمثل صفحة</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-purple-950/60 border border-purple-400/40 space-y-1.5">
+                        <div className="font-bold text-amber-300">
+                          🔍 ما هي حقول الصفحة الواحدة داخل مصفوفة pages (نوع Map):
+                        </div>
+                        <ul className="list-disc list-inside space-y-1 text-purple-200">
+                          <li><code className="text-amber-300 font-bold">pageNumber</code> (number): رقم الصفحة مثل <code className="text-emerald-300">1</code> أو <code className="text-emerald-300">2</code>.</li>
+                          <li><code className="text-amber-300 font-bold">chapterTitle</code> (string): عنوان المشهد مثل «المسير الصباحي نحو المدرسة».</li>
+                          <li><code className="text-amber-300 font-bold">image</code> (string): رابط أو مسار صورة المشهد في الصفحة.</li>
+                          <li><code className="text-amber-300 font-bold">text</code> (string): النص العادي للقراءة.</li>
+                          <li><code className="text-amber-300 font-bold">tashkeelText</code> (string): النص المشكول بالفتحة والضمة والكسرة ليتعلم الأطفال النطق السليم.</li>
+                          <li><code className="text-amber-300 font-bold">audioDuration</code> (string): مدة القراءة الصوتية مثل <code className="text-emerald-300">"01:10"</code>.</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+                      <span className="text-[11px] text-purple-300">
+                        💡 نصيحة: بدلاً من الكتابة اليدوية المعقدة في كونسول فايربيز، يمكنك استخدام تبويب <strong>"كتاب مصور 📖"</strong> في هذه اللوحة لكتابة الصفحات وتحديثها بضغطة زر واحدة!
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('pictureBook')}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs hover:scale-105 transition-all cursor-pointer shadow"
+                      >
+                        الانتقال لمحرر الكتاب المصور البصري 📖✨
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
@@ -1650,6 +1832,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   </div>
 
                   <div className="space-y-1">
+                    <label className="text-xs font-bold text-amber-400 flex items-center justify-between">
+                      <span>رابط فيديو القصة (videoUrl: string):</span>
+                      <span className="text-[10px] text-purple-300 font-normal">اختياري - مخصص لقصص الطبخ والفيديو</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={storyVideoUrl}
+                      onChange={(e) => setStoryVideoUrl(e.target.value)}
+                      placeholder="/assets/aistudio/...mp4 أو رابط فيديو"
+                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-purple-700 text-xs dir-ltr"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
                     <label className="text-xs font-bold text-amber-400">
                       العبرة التربوية (moralLesson: string):
                     </label>
@@ -1734,6 +1930,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* TAB: Instant Multi-Story Studio & Generator (باقات وقوالب النشر السريع) */}
+            {activeTab === 'multiStories' && (
+              <InstantMultiStoryStudio
+                mode={mode}
+                onSaveStory={onSaveStory}
+                existingStories={stories}
+              />
             )}
 
             {/* TAB 4: Picture Book 10-Pages + MP3 Audio Link */}
