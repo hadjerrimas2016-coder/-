@@ -21,8 +21,14 @@ import {
   Shield,
   Gem,
   Moon,
-  Feather
+  Feather,
+  Check,
+  X,
+  RefreshCw,
+  UserCheck,
+  Smile
 } from 'lucide-react';
+import { ShahrazadCharacterAvatar } from './ShahrazadCharacterAvatar';
 import confetti from 'canvas-confetti';
 import {
   playSparkleSound,
@@ -359,6 +365,58 @@ export const ShahrazadCorner: React.FC<ShahrazadCornerProps> = ({
   const [narratingStoryId, setNarratingStoryId] = useState<string | null>(null);
   const [activeTabSub, setActiveTabSub] = useState<'stories' | 'characters' | 'riddles'>('stories');
 
+  // Fantasy Companion System: Selected Companion (one of the 8 characters)
+  const [selectedCompanionId, setSelectedCompanionId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('raed_shahrazad_selected_character') || 'shahrazad';
+    } catch {
+      return 'shahrazad';
+    }
+  });
+  const [showCompanionModal, setShowCompanionModal] = useState<boolean>(false);
+  const [isPlayingCompanionVoice, setIsPlayingCompanionVoice] = useState<boolean>(false);
+
+  const selectedCompanion =
+    SHAHRAZAD_CHARACTERS.find((c) => c.id === selectedCompanionId) || SHAHRAZAD_CHARACTERS[0];
+
+  const handleSelectCompanion = (char: ShahrazadCharacter) => {
+    playFanfareSound();
+    setSelectedCompanionId(char.id);
+    try {
+      localStorage.setItem('raed_shahrazad_selected_character', char.id);
+    } catch {}
+    confetti({ particleCount: 80, spread: 80 });
+    onEarnStars(25, `اختيار رفيقك الخيالي: ${char.name} 🎭✨`);
+    setShowCompanionModal(false);
+
+    // Speak character voice quote
+    setIsPlayingCompanionVoice(true);
+    speakArabicSpeech(
+      char.voiceQuote,
+      () => setIsPlayingCompanionVoice(true),
+      () => setIsPlayingCompanionVoice(false),
+      () => setIsPlayingCompanionVoice(false),
+      { voiceTone: 'joyful', rate: 0.88 }
+    );
+  };
+
+  const handlePlayCompanionVoice = (char = selectedCompanion) => {
+    playClickSound();
+    if (isPlayingCompanionVoice) {
+      stopArabicSpeech();
+      setIsPlayingCompanionVoice(false);
+      return;
+    }
+    setIsPlayingCompanionVoice(true);
+    speakArabicSpeech(
+      `${char.name}: ${char.voiceQuote}`,
+      () => setIsPlayingCompanionVoice(true),
+      () => setIsPlayingCompanionVoice(false),
+      () => setIsPlayingCompanionVoice(false),
+      { voiceTone: 'joyful', rate: 0.88 }
+    );
+  };
+
   // Filtered Arabian Nights stories
   const allShahrazadStories = [...ARABIAN_NIGHTS_STORIES];
   // Also include any stories from the main list marked with category 'shahrazad' that aren't already included
@@ -418,14 +476,15 @@ export const ShahrazadCorner: React.FC<ShahrazadCornerProps> = ({
       return;
     }
 
-    const textToSpeak = `${story.title}. ${story.subtitle}. ${story.pages[0]?.text || story.description}`;
+    const companionIntro = `${selectedCompanion.name} يرافقك ويقول: هيا نستمع معاً إلى ${story.title}!... `;
+    const textToSpeak = `${companionIntro} ${story.title}. ${story.subtitle}. ${story.pages[0]?.text || story.description}`;
     setNarratingStoryId(story.id);
     speakArabicSpeech(
       textToSpeak,
       () => setNarratingStoryId(story.id),
       () => {
         setNarratingStoryId(null);
-        onEarnStars(20, `الاستماع إلى حكاية ${story.title}`);
+        onEarnStars(20, `الاستماع إلى حكاية ${story.title} برفقة ${selectedCompanion.name}`);
         confetti({ particleCount: 40, spread: 60 });
         playSparkleSound();
       },
@@ -514,19 +573,141 @@ export const ShahrazadCorner: React.FC<ShahrazadCornerProps> = ({
             </div>
           </div>
 
-          {/* Shahrazad Avatar Card */}
-          <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl overflow-hidden border-2 border-amber-400/60 shadow-2xl bg-gradient-to-b from-purple-800 to-indigo-950 flex-shrink-0 group">
-            <img
-              src="/assets/aistudio/Capture_d__cran_2026-10-19_114332_ce58ab60.png"
-              alt="شهرزاد اليافعة"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-center">
-              <span className="text-[11px] font-black text-amber-300">شهرزاد اليافعة 👑</span>
-              <span className="text-[9px] text-purple-200">أميرة الحكايات</span>
+          {/* Active Fantasy Companion Card in Hero Banner */}
+          <div
+            onClick={() => setShowCompanionModal(true)}
+            className="relative w-40 sm:w-48 p-3 rounded-3xl overflow-hidden border-2 border-amber-400/80 shadow-2xl bg-gradient-to-b from-[#2a1147] to-[#120726] flex-shrink-0 group cursor-pointer hover:border-amber-300 transition-all hover:scale-102"
+            title="انقر لتغيير رفيقك الخيالي في عالم شهرزاد"
+          >
+            <div className="flex flex-col items-center text-center space-y-1.5">
+              <div className="relative">
+                <ShahrazadCharacterAvatar
+                  characterId={selectedCompanion.id}
+                  size="xl"
+                  showBadge={true}
+                  animated={isPlayingCompanionVoice}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePlayCompanionVoice(selectedCompanion);
+                  }}
+                  className="absolute bottom-0 right-0 p-1.5 rounded-full bg-amber-400 text-amber-950 shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                  title="استمع لصوت الرفيق"
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 inline-block">
+                  رفيقك الحالي 🎭
+                </span>
+                <h4 className="text-sm font-black text-white mt-0.5">{selectedCompanion.name}</h4>
+                <p className="text-[10px] text-purple-200 line-clamp-1">{selectedCompanion.role}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCompanionModal(true);
+                }}
+                className="w-full py-1 rounded-xl bg-purple-800/80 hover:bg-purple-700 text-[10px] font-bold text-amber-300 flex items-center justify-center gap-1 border border-purple-500/40 transition-all cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>تغيير الرفيق</span>
+              </button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Fantasy Companion Companion Dock & Listening Aura Shelf */}
+      <div
+        className={`p-4 rounded-3xl border transition-all shadow-xl space-y-3 relative overflow-hidden bg-gradient-to-r ${selectedCompanion.themeGradient} ${selectedCompanion.borderGlow}`}
+      >
+        {/* Subtle Watermark Silhouette */}
+        <div className="absolute -left-10 -bottom-10 opacity-15 pointer-events-none transform -rotate-12 scale-150">
+          <ShahrazadCharacterAvatar characterId={selectedCompanion.id} size="xl" showBadge={false} />
+        </div>
+
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <ShahrazadCharacterAvatar
+              characterId={selectedCompanion.id}
+              size="lg"
+              showBadge={true}
+              animated={isPlayingCompanionVoice}
+              onClick={() => handlePlayCompanionVoice(selectedCompanion)}
+            />
+            <div className="space-y-1 text-center sm:text-right">
+              <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-amber-950 shadow-sm">
+                  رفيقك المختار في عالم شهرزاد 🎭
+                </span>
+                <span className="text-xs font-black text-amber-300">
+                  {selectedCompanion.title}
+                </span>
+                <span className="text-[10px] text-purple-200 font-bold bg-white/10 px-2 py-0.5 rounded-full">
+                  {selectedCompanion.badge}
+                </span>
+              </div>
+              <p className="text-xs text-purple-100 font-medium italic">
+                "{selectedCompanion.voiceQuote}"
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start pt-0.5">
+                {selectedCompanion.traits.map((trait, tIdx) => (
+                  <span
+                    key={tIdx}
+                    className="text-[10px] px-2 py-0.5 rounded-md bg-black/30 border border-white/10 text-amber-200/90 font-medium"
+                  >
+                    ✦ {trait}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap justify-center flex-shrink-0">
+            <button
+              onClick={() => handlePlayCompanionVoice(selectedCompanion)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isPlayingCompanionVoice
+                  ? 'bg-rose-500 text-white animate-pulse'
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
+              }`}
+            >
+              <Volume2 className="w-3.5 h-3.5 text-amber-300" />
+              <span>{isPlayingCompanionVoice ? 'إيقاف الصوت' : 'اسمع نصيحة الرفيق 🎙️'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                playClickSound();
+                setShowCompanionModal(true);
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 font-black text-xs flex items-center gap-1.5 shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>اختر رفيقك (8 شخصيات) 🎭</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Listening Bubble when narrating a story */}
+        {narratingStoryId && (
+          <div className="relative z-10 p-3 rounded-2xl bg-black/50 border border-amber-400/50 flex items-center gap-3 animate-in fade-in duration-300">
+            <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping flex-shrink-0" />
+            <div className="text-xs text-amber-200 font-bold flex-1">
+              <span className="text-amber-400 font-black ml-1">
+                {selectedCompanion.name} يرافقك أثناء الاستماع:
+              </span>
+              <span>"{selectedCompanion.companionTip}"</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sub-Navigation between Stories, Characters, and Riddles */}
@@ -731,63 +912,133 @@ export const ShahrazadCorner: React.FC<ShahrazadCornerProps> = ({
         </div>
       )}
 
-      {/* VIEW 2: Characters Gallery */}
+      {/* VIEW 2: Characters Gallery & Companion Selection */}
       {activeTabSub === 'characters' && (
-        <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <h3 className="text-sm sm:text-base font-black text-amber-300">
-                أبطال وفرسان قصر ألف ليلة وليلة 👑
-              </h3>
-              <p className="text-xs text-purple-200/80">
-                تعرف على شخصيات الشرق الأسطورية التي ألهمت ملايين الأطفال بالحكمة والفروسية
+        <div className="space-y-5">
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-950 via-[#210c3b] to-indigo-950 border-2 border-amber-400/50 shadow-xl flex items-center justify-between flex-wrap gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-xl bg-amber-400 text-amber-950 font-black">
+                  <Crown className="w-5 h-5" />
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-amber-300">
+                  شخصيات وفرسان قصر ألف ليلة وليلة (8 شخصيات خيالية) 🎭✨
+                </h3>
+              </div>
+              <p className="text-xs text-purple-200/90 leading-relaxed max-w-2xl">
+                اختر شخصيتك المفضلة لترافقك كرفيق دائم طوال رحلتك في عالم شهرزاد، وتستمع معك للقصص وتلهمك بالعبر والقيم النبيلة!
               </p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-bold">
-              {SHAHRAZAD_CHARACTERS.length} شخصيات أسطورية
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-black">
+                رفيقك الحالي: {selectedCompanion.name} {selectedCompanion.avatarEmoji}
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {SHAHRAZAD_CHARACTERS.map((char) => (
-              <div
-                key={char.id}
-                className="p-4 rounded-3xl bg-gradient-to-b from-[#1d113f] to-[#120a2a] border border-purple-700/50 hover:border-amber-400/60 transition-all shadow-xl space-y-3 flex flex-col justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-400/60 shadow-md flex-shrink-0">
-                    <img
-                      src={char.image}
-                      alt={char.title}
-                      className="w-full h-full object-cover"
-                    />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {SHAHRAZAD_CHARACTERS.map((char) => {
+              const isSelected = selectedCompanionId === char.id;
+              return (
+                <div
+                  key={char.id}
+                  className={`p-4 rounded-3xl border transition-all duration-300 shadow-xl space-y-3 flex flex-col justify-between relative overflow-hidden ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-[#2e104a] to-[#160829] border-amber-400 ring-2 ring-amber-400/50 shadow-amber-500/20 scale-[1.02]'
+                      : 'bg-gradient-to-b from-[#180e33] to-[#0f0721] border-purple-800/50 hover:border-purple-500'
+                  }`}
+                >
+                  {/* Subtle Background Watermark */}
+                  <div className="absolute -left-6 -bottom-6 opacity-10 pointer-events-none transform -rotate-12 scale-125">
+                    <ShahrazadCharacterAvatar characterId={char.id} size="lg" showBadge={false} />
                   </div>
-                  <div>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-900 text-amber-300 border border-purple-500/40">
-                      {char.badge}
-                    </span>
-                    <h4 className="text-sm font-black text-white mt-0.5">{char.title}</h4>
-                    <span className="text-[11px] text-purple-300/80 block">{char.subtitle}</span>
+
+                  <div className="relative z-10 space-y-3">
+                    {/* Header: Avatar & Info */}
+                    <div className="flex items-center gap-3">
+                      <ShahrazadCharacterAvatar
+                        characterId={char.id}
+                        size="md"
+                        showBadge={true}
+                        animated={isSelected && isPlayingCompanionVoice}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-900/90 text-amber-300 border border-purple-500/40 truncate">
+                            {char.badge}
+                          </span>
+                          {isSelected && (
+                            <span className="px-1.5 py-0.2 rounded-md bg-amber-400 text-amber-950 text-[9px] font-black">
+                              نشط ⭐
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-black text-white mt-0.5 truncate">{char.name}</h4>
+                        <span className="text-[10px] text-purple-300/90 block truncate">{char.role}</span>
+                      </div>
+                    </div>
+
+                    {/* Subtitle & Traits */}
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] text-amber-200/90 font-medium line-clamp-1">{char.subtitle}</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {char.traits.slice(0, 2).map((t, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-purple-200"
+                          >
+                            ✦ {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-[11px] text-purple-200/90 leading-relaxed bg-black/30 p-2.5 rounded-xl border border-white/5">
+                      {char.description}
+                    </p>
+
+                    {/* Quote Bubble */}
+                    <div className="p-2 rounded-xl bg-purple-950/50 border border-purple-500/20 text-[10px] text-purple-200 italic line-clamp-2">
+                      "{char.voiceQuote}"
+                    </div>
+                  </div>
+
+                  {/* Actions: Voice & Select */}
+                  <div className="relative z-10 space-y-2 pt-1">
+                    <button
+                      onClick={() => handlePlayCompanionVoice(char)}
+                      className="w-full py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-purple-600/40 text-[11px] font-bold text-amber-300 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>اسمع صوت {char.name} 🎙️</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectCompanion(char)}
+                      disabled={isSelected}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white cursor-default'
+                          : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 hover:brightness-110 active:scale-95'
+                      }`}
+                    >
+                      {isSelected ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>رفيقك المختار حالياً 🌟</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>اختر {char.name} كرفيق لي 🎭</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
-
-                <p className="text-xs text-purple-200/90 leading-relaxed bg-black/20 p-2.5 rounded-xl border border-white/5">
-                  {char.description}
-                </p>
-
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    const greeting = `${char.title}. ${char.subtitle}. ${char.description}`;
-                    speakArabicSpeech(greeting, undefined, undefined, undefined, { voiceTone: 'joyful' });
-                  }}
-                  className="w-full py-1.5 px-3 rounded-xl bg-purple-900/50 hover:bg-purple-800 border border-purple-600/40 text-xs font-bold text-amber-300 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Volume2 className="w-3.5 h-3.5" />
-                  <span>اسمع بطاقة الشخصية بصوت شهرزاد 🎙️</span>
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -875,6 +1126,124 @@ export const ShahrazadCorner: React.FC<ShahrazadCornerProps> = ({
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 4. COMPANION SELECTION POPUP MODAL (8 FANTASY CHARACTERS) */}
+      {showCompanionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-gradient-to-b from-[#210a38] via-[#150626] to-[#0d0317] border-2 border-amber-400/80 rounded-3xl shadow-[0_0_50px_rgba(234,179,8,0.3)] flex flex-col overflow-hidden text-white">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-950 via-[#260e3f] to-indigo-950 border-b border-purple-500/40 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-2xl bg-amber-400 text-amber-950 shadow-md">
+                  <UserCheck className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-amber-300">
+                    اختر رفيقك الخيالي في عالم شهرزاد 🎭✨
+                  </h3>
+                  <p className="text-xs text-purple-200">
+                    الشخصية التي تختارها سترافقك في الاستماع للقصص وتظهر كخلفية ملهمة لرحلتك!
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setShowCompanionModal(false);
+                }}
+                className="p-2 rounded-full bg-white/10 hover:bg-rose-500 text-white transition-all cursor-pointer"
+                title="إغلاق"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Grid of 8 Characters */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 no-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+                {SHAHRAZAD_CHARACTERS.map((char) => {
+                  const isSelected = selectedCompanionId === char.id;
+                  return (
+                    <div
+                      key={char.id}
+                      className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between space-y-3 cursor-pointer ${
+                        isSelected
+                          ? 'bg-gradient-to-b from-purple-900 to-indigo-950 border-amber-400 ring-2 ring-amber-400/60 shadow-lg shadow-amber-500/30'
+                          : 'bg-white/5 border-purple-800/40 hover:bg-white/10 hover:border-purple-500'
+                      }`}
+                      onClick={() => handleSelectCompanion(char)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <ShahrazadCharacterAvatar
+                          characterId={char.id}
+                          size="md"
+                          showBadge={true}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-black text-white truncate">{char.name}</span>
+                            {isSelected && (
+                              <span className="px-1.5 py-0.2 rounded bg-amber-400 text-amber-950 text-[9px] font-black">
+                                نشط
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-amber-300 font-bold truncate">{char.badge}</p>
+                          <p className="text-[9px] text-purple-300 truncate">{char.role}</p>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-purple-200/90 leading-relaxed bg-black/30 p-2 rounded-xl line-clamp-2">
+                        "{char.voiceQuote}"
+                      </p>
+
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayCompanionVoice(char);
+                          }}
+                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-amber-300 transition-all cursor-pointer"
+                          title="استمع للصوت"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectCompanion(char);
+                          }}
+                          className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-black transition-all shadow-md cursor-pointer ${
+                            isSelected
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 hover:brightness-110 active:scale-95'
+                          }`}
+                        >
+                          {isSelected ? '✓ رفيقك الحالي' : 'اختيار كرفيق 🎭'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-black/40 border-t border-white/10 flex items-center justify-between text-xs text-purple-300 px-6">
+              <span>اختر أي شخصية وسيرافقك في الاستماع للقصص مع نصائح مشجعة!</span>
+              <button
+                onClick={() => setShowCompanionModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                إغلاق
+              </button>
             </div>
           </div>
         </div>

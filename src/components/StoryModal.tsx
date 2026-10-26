@@ -21,7 +21,8 @@ import {
   Mic,
   Square,
   Trash2,
-  Check
+  Check,
+  Image as ImageIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -35,6 +36,10 @@ import {
   stopArabicSpeech,
   getSoundEnabled
 } from '../utils/audio';
+import { SHAHRAZAD_CHARACTERS } from '../data/storiesData';
+import { ShahrazadCharacterAvatar } from './ShahrazadCharacterAvatar';
+import { getStoryCover } from '../utils/customCovers';
+import { StoryCoverPickerModal } from './StoryCoverPickerModal';
 
 interface StoryModalProps {
   story: Story;
@@ -64,6 +69,34 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   const [quizAnswered, setQuizAnswered] = useState<{ [qIdx: number]: number }>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [interactiveToast, setInteractiveToast] = useState<{ emoji: string; msg: string } | null>(null);
+
+  // Fantasy Companion for Shahrazad Stories
+  const isShahrazadStory = story.category === 'shahrazad';
+  const savedCharId =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('raed_shahrazad_selected_character') || 'shahrazad'
+      : 'shahrazad';
+  const activeCompanion =
+    SHAHRAZAD_CHARACTERS.find((c) => c.id === savedCharId) || SHAHRAZAD_CHARACTERS[0];
+
+  // Story Cover customization state
+  const [coverUrl, setCoverUrl] = useState<string>(() =>
+    getStoryCover(story.id, story.coverImage)
+  );
+  const [isCoverPickerOpen, setIsCoverPickerOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setCoverUrl(getStoryCover(story.id, story.coverImage));
+    const handleCoverUpdate = (e: any) => {
+      if (e.detail && e.detail.storyId === story.id) {
+        setCoverUrl(e.detail.coverUrl || story.coverImage);
+      }
+    };
+    window.addEventListener('raed_story_cover_updated', handleCoverUpdate);
+    return () => {
+      window.removeEventListener('raed_story_cover_updated', handleCoverUpdate);
+    };
+  }, [story.id, story.coverImage]);
 
   // Audio timer simulation
   useEffect(() => {
@@ -255,7 +288,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     backgroundAudio.playAmbientCarrier({
       title: story.title,
       subtitle: 'الصفحة ' + (currentPage + 1) + ': ' + (story.pages[currentPage]?.text?.slice(0, 30) || story.subtitle),
-      artworkUrl: story.coverImage,
+      artworkUrl: coverUrl,
     });
     speakArabicSpeech(
       textToSpeak,
@@ -382,12 +415,29 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         {/* Modal Body */}
         <div className="p-4 sm:p-5 max-h-[80vh] overflow-y-auto no-scrollbar space-y-4">
           {/* Main Story Hero Artwork Banner */}
-          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/10] bg-slate-900 border border-white/20">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/10] bg-slate-900 border border-white/20 group">
             <img
-              src={story.coverImage}
+              src={coverUrl}
               alt={story.title}
               className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
             />
+
+            {/* Direct Cover Change Button */}
+            <div className="absolute top-3 left-3 z-20">
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  setIsCoverPickerOpen(true);
+                }}
+                className="px-2.5 py-1.5 rounded-full text-xs font-bold bg-black/70 hover:bg-pink-600 text-white backdrop-blur-md border border-white/30 shadow-lg flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer"
+                title="تخصيص واختيار غلاف القصة بنفسك 🎨"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
+                <span>تغيير الغلاف 🖼️</span>
+              </button>
+            </div>
+
             {/* Story Title Overlay (Matching Attachment 1) */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-4">
               <div className="flex items-center justify-between">
@@ -406,6 +456,64 @@ export const StoryModal: React.FC<StoryModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Shahrazad Fantasy Companion Listening Buddy & Background Aura */}
+          {isShahrazadStory && (
+            <div
+              className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 shadow-md bg-gradient-to-r ${activeCompanion.themeGradient} ${activeCompanion.borderGlow}`}
+            >
+              <div className="flex items-center gap-3">
+                <ShahrazadCharacterAvatar
+                  characterId={activeCompanion.id}
+                  size="md"
+                  showBadge={true}
+                  animated={isPlaying}
+                  onClick={() => {
+                    playClickSound();
+                    speakArabicSpeech(
+                      `${activeCompanion.name} يقول: ${activeCompanion.companionTip}`,
+                      undefined,
+                      undefined,
+                      undefined,
+                      { voiceTone: 'joyful' }
+                    );
+                  }}
+                />
+                <div className="space-y-0.5 text-right">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-amber-950">
+                      رفيقك في عالم شهرزاد 🎭
+                    </span>
+                    <h4 className="text-xs font-black text-amber-300">
+                      {activeCompanion.name} • {activeCompanion.badge}
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-purple-100 font-medium italic line-clamp-1">
+                    "{isPlaying ? activeCompanion.companionTip : activeCompanion.voiceQuote}"
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  speakArabicSpeech(
+                    `${activeCompanion.name} يقول لك: ${activeCompanion.voiceQuote}`,
+                    undefined,
+                    undefined,
+                    undefined,
+                    { voiceTone: 'joyful' }
+                  );
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold flex items-center gap-1 flex-shrink-0 cursor-pointer border border-white/10"
+                title="استمع لصوت الرفيق"
+              >
+                <Volume2 className="w-3 h-3 text-amber-300" />
+                <span>نصيحة {activeCompanion.name} 🎙️</span>
+              </button>
+            </div>
+          )}
 
           {/* Audio Player Controls (Inspired by Attachment 1) */}
           <div
@@ -785,6 +893,17 @@ export const StoryModal: React.FC<StoryModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Story Cover Picker Modal */}
+      <StoryCoverPickerModal
+        storyId={story.id}
+        storyTitle={story.title}
+        currentCover={coverUrl}
+        defaultCover={story.coverImage}
+        isOpen={isCoverPickerOpen}
+        onClose={() => setIsCoverPickerOpen(false)}
+        onCoverUpdated={(newCover) => setCoverUrl(newCover)}
+      />
     </div>
   );
 };

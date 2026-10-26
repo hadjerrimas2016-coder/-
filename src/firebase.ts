@@ -236,6 +236,16 @@ export async function publishPictureBookToFirestore(bookData: any): Promise<void
   }
 }
 
+export async function deletePictureBookFromFirestore(bookId: string): Promise<void> {
+  const path = `pictureBooks/${bookId}`;
+  try {
+    const bookDocRef = doc(db, 'pictureBooks', bookId);
+    await deleteDoc(bookDocRef);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
 // Sunnah Corner Firestore operations (Surahs and Duas)
 export function subscribeToSunnah(
   onSuccess: (items: any[]) => void,
@@ -379,4 +389,38 @@ export async function savePublicProfileToFirestore(profileData: any): Promise<vo
     handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
+
+// Sleep Radio tracks and videos sync in app_settings/sleep_radio
+export function subscribeToSleepTracks(
+  onSuccess: (tracks: any[]) => void,
+  onError?: (err: unknown) => void
+): Unsubscribe {
+  const docRef = doc(db, 'app_settings', 'sleep_radio');
+  return onSnapshot(
+    docRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data && Array.isArray(data.tracks)) {
+          onSuccess(data.tracks);
+        }
+      }
+    },
+    (error) => {
+      if (onError) onError(error);
+      handleFirestoreError(error, OperationType.GET, 'app_settings/sleep_radio');
+    }
+  );
+}
+
+export async function publishSleepTracksToFirestore(tracks: any[]): Promise<void> {
+  const path = 'app_settings/sleep_radio';
+  try {
+    const docRef = doc(db, 'app_settings', 'sleep_radio');
+    await setDoc(docRef, { tracks, updatedAt: Date.now() }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
 

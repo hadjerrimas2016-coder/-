@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppMode, ActiveTab, Story, PictureBook, UserAudioRecording, SupportedLanguage, SunnahItem, HeroVideoSettings, DEFAULT_HERO_VIDEO } from './types';
 import { STORIES_DATA } from './data/storiesData';
-import { DEFAULT_PICTURE_BOOK } from './data/pictureBooksData';
+import { DEFAULT_PICTURE_BOOK, PRESET_PICTURE_BOOKS } from './data/pictureBooksData';
 import { DEFAULT_SUNNAH_ITEMS } from './data/sunnahData';
 import { SunnahCorner } from './components/SunnahCorner';
 import { SkyBackground } from './components/SkyBackground';
@@ -37,6 +37,8 @@ import {
   isOwnerAdmin,
   subscribeToStories,
   subscribeToPictureBooks,
+  publishPictureBookToFirestore,
+  deletePictureBookFromFirestore,
   subscribeToSunnah,
   subscribeToHeroVideo,
 } from './firebase';
@@ -55,7 +57,30 @@ export default function App() {
     }
     return list;
   });
-  const [pictureBook, setPictureBook] = useState<PictureBook>(DEFAULT_PICTURE_BOOK);
+  const [pictureBook, setPictureBook] = useState<PictureBook>(() => {
+    try {
+      const saved = localStorage.getItem('raed_picture_book');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed.pages) && parsed.pages.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return DEFAULT_PICTURE_BOOK;
+  });
+  const [allPictureBooks, setAllPictureBooks] = useState<PictureBook[]>(() => {
+    try {
+      const saved = localStorage.getItem('raed_all_picture_books');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return PRESET_PICTURE_BOOKS;
+  });
   const [sunnahItems, setSunnahItems] = useState<SunnahItem[]>(DEFAULT_SUNNAH_ITEMS);
   const [heroVideo, setHeroVideo] = useState<HeroVideoSettings>(() => {
     try {
@@ -83,6 +108,7 @@ export default function App() {
   const [showStoryAuthoring, setShowStoryAuthoring] = useState<boolean>(false);
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [showPictureBook, setShowPictureBook] = useState<boolean>(false);
+  const [openPictureBookPublisherDirect, setOpenPictureBookPublisherDirect] = useState<boolean>(false);
 
   // Listen to Auth State
   useEffect(() => {
@@ -116,15 +142,31 @@ export default function App() {
       }
     });
 
-    const unsubBooks = subscribeToPictureBooks((books: PictureBook[]) => {
-      if (books && books.length > 0) {
-        const book = books[0];
-        setPictureBook(book);
-        try {
-          localStorage.setItem('raed_picture_book', JSON.stringify(book));
-        } catch {
-          // ignore
-        }
+    const unsubBooks = subscribeToPictureBooks((cloudBooks: PictureBook[]) => {
+      if (cloudBooks && cloudBooks.length > 0) {
+        setAllPictureBooks((prev) => {
+          const merged = [...cloudBooks];
+          for (const preset of PRESET_PICTURE_BOOKS) {
+            if (!merged.some((b) => b.id === preset.id)) {
+              merged.push(preset);
+            }
+          }
+          try {
+            localStorage.setItem('raed_all_picture_books', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+
+        setPictureBook((current) => {
+          const matched = cloudBooks.find((b) => b.id === current.id);
+          if (matched && Array.isArray(matched.pages) && matched.pages.length > 0) {
+            try {
+              localStorage.setItem('raed_picture_book', JSON.stringify(matched));
+            } catch {}
+            return matched;
+          }
+          return current;
+        });
       }
     });
 
@@ -293,11 +335,50 @@ export default function App() {
 
   const handleSavePictureBook = (updatedBook: PictureBook) => {
     setPictureBook(updatedBook);
+    setAllPictureBooks((prev) => {
+      const exists = prev.some((b) => b.id === updatedBook.id);
+      const updated = exists
+        ? prev.map((b) => (b.id === updatedBook.id ? updatedBook : b))
+        : [updatedBook, ...prev];
+      try {
+        localStorage.setItem('raed_all_picture_books', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
     try {
       localStorage.setItem('raed_picture_book', JSON.stringify(updatedBook));
     } catch {
       // ignore
     }
+    publishPictureBookToFirestore(updatedBook).catch(() => {});
+  };
+
+  const handleDeletePictureBook = (bookId: string) => {
+    setAllPictureBooks((prev) => {
+      const filtered = prev.filter((b) => b.id !== bookId);
+      const safe = filtered.length > 0 ? filtered : PRESET_PICTURE_BOOKS;
+      try {
+        localStorage.setItem('raed_all_picture_books', JSON.stringify(safe));
+      } catch {
+        // ignore
+      }
+      return safe;
+    });
+    setPictureBook((current) => {
+      if (current.id === bookId) {
+        const fallback = PRESET_PICTURE_BOOKS[0];
+        try {
+          localStorage.setItem('raed_picture_book', JSON.stringify(fallback));
+        } catch {
+          // ignore
+        }
+        return fallback;
+      }
+      return current;
+    });
+    deletePictureBookFromFirestore(bookId).catch(() => {});
   };
 
   const handleSaveHeroVideo = (settingsToSave: HeroVideoSettings) => {
@@ -629,12 +710,19 @@ export default function App() {
       {showPictureBook && (
         <PictureBookModal
           book={pictureBook}
+          allBooks={allPictureBooks}
           mode={mode}
-          onClose={() => setShowPictureBook(false)}
+          onClose={() => {
+            setShowPictureBook(false);
+            setOpenPictureBookPublisherDirect(false);
+          }}
           onEarnStars={handleEarnStars}
           onUpdateBook={handleSavePictureBook}
+          onSelectBook={(selected) => setPictureBook(selected)}
+          onDeleteBook={handleDeletePictureBook}
           onSaveUserRecording={handleSaveUserRecording}
           existingRecordings={userRecordings}
+          initialOpenPublisher={openPictureBookPublisherDirect}
         />
       )}
     </div>

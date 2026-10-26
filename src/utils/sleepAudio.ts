@@ -1,6 +1,8 @@
 // Web Audio API engine for soothing sleep music & ambient lullabies
 // Pure procedural synthesis without external asset dependencies
 
+export type SleepMediaType = 'audio' | 'video';
+
 export interface SleepTrack {
   id: string;
   title: string;
@@ -10,9 +12,38 @@ export interface SleepTrack {
   durationSec: number;
   description: string;
   gradient: string;
+  mediaType?: SleepMediaType;
+  videoUrl?: string;
+  audioUrl?: string;
+  isCustom?: boolean;
+  createdAt?: number;
 }
 
 export const SLEEP_TRACKS: SleepTrack[] = [
+  {
+    id: 'cosmic-stars-video',
+    title: 'سماء النجوم والفضاء الهادئ 🌌',
+    subtitle: 'مشهد ليلي كوني متحرك مهدئ للأعصاب يبعث على النعاس العميق',
+    icon: '🌌',
+    genre: 'فيديو كوني هادئ وموسيقى أثيرية',
+    durationSec: 1800, // 30 mins
+    description: 'رحلة بصرية وصوتية ساحرة عبر الفضاء والنجوم المتلألئة تساعد طفلك على استرخاء العينين والاستغراق في النوم.',
+    gradient: 'from-purple-950 via-indigo-950 to-black',
+    mediaType: 'video',
+    videoUrl: '/assets/aistudio/video_z5xqdjk5_20261021184400_87b84f16.mp4',
+  },
+  {
+    id: 'lunar-twilight-video',
+    title: 'تهويدة سماء الغيوم والنجوم 🌙',
+    subtitle: 'فيديو هادئ لحركة السحب والنجوم في سماء الليل الهادئة',
+    icon: '✨',
+    genre: 'فيديو هادئ وتهويدة الأحلام',
+    durationSec: 1500, // 25 mins
+    description: 'حركة غيوم ليلية ناعمة تحيط بالنجوم مع هدوء تام يناسب وقت النوم والتأمل.',
+    gradient: 'from-blue-950 via-slate-900 to-indigo-950',
+    mediaType: 'video',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-starry-night-sky-with-clouds-and-stars-41312-large.mp4',
+  },
   {
     id: 'moonlight-lullaby',
     title: 'تهويدة ضوء القمر والنجوم',
@@ -22,6 +53,7 @@ export const SLEEP_TRACKS: SleepTrack[] = [
     durationSec: 1200, // 20 mins
     description: 'نغمات ناعمة تتردد بهدوء كأنها قطرات ضوء تهبط من القمر لتغلف غرفتك بالدفء.',
     gradient: 'from-indigo-950 via-purple-900 to-slate-950',
+    mediaType: 'audio',
   },
   {
     id: 'desert-oasis',
@@ -32,6 +64,7 @@ export const SLEEP_TRACKS: SleepTrack[] = [
     durationSec: 1500, // 25 mins
     description: 'هدوء الواحة تحت قبة السماء الصافية ونسمات الهواء المريحة تساعد على نوم عميق.',
     gradient: 'from-amber-950 via-purple-950 to-indigo-950',
+    mediaType: 'audio',
   },
   {
     id: 'ocean-whispers',
@@ -42,6 +75,7 @@ export const SLEEP_TRACKS: SleepTrack[] = [
     durationSec: 1800, // 30 mins
     description: 'حركة مد وجزر منتظمة تهدئ ضربات القلب وتأخذ طفلك إلى عالم الخيال والراحة.',
     gradient: 'from-cyan-950 via-blue-950 to-slate-950',
+    mediaType: 'audio',
   },
   {
     id: 'forest-rain',
@@ -52,6 +86,7 @@ export const SLEEP_TRACKS: SleepTrack[] = [
     durationSec: 1200, // 20 mins
     description: 'صوت المطر الرتيب الهادئ يبعث على الأمان ويساعد العقل على الاسترخاء الفوري.',
     gradient: 'from-emerald-950 via-teal-950 to-slate-950',
+    mediaType: 'audio',
   },
   {
     id: 'cosmic-slumber',
@@ -62,6 +97,7 @@ export const SLEEP_TRACKS: SleepTrack[] = [
     durationSec: 1500, // 25 mins
     description: 'رحلة خيالية ناعمة تسبح بين الكواكب البراقة وتغمر الروح بالسكينة والأمان.',
     gradient: 'from-purple-950 via-indigo-950 to-black',
+    mediaType: 'audio',
   },
   {
     id: 'bedtime-story-music',
@@ -72,6 +108,7 @@ export const SLEEP_TRACKS: SleepTrack[] = [
     durationSec: 1200, // 20 mins
     description: 'موسيقى خلفية مصممة خصيصاً للاستماع أثناء قراءة أو سرد قصص النوم للأطفال.',
     gradient: 'from-slate-900 via-indigo-950 to-purple-950',
+    mediaType: 'audio',
   },
 ];
 
@@ -82,6 +119,8 @@ class SleepAudioEngine {
   private currentTrackId: string = 'moonlight-lullaby';
   private intervals: number[] = [];
   private activeNodes: (AudioNode | { stop: (time?: number) => void })[] = [];
+  private customAudioEl: HTMLAudioElement | null = null;
+  private currentVolume: number = 0.75;
 
   private initContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
@@ -98,26 +137,45 @@ class SleepAudioEngine {
     }
     if (this.ctx && !this.masterGain) {
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.currentVolume, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
     }
     return this.ctx;
   }
 
   public setVolume(volume: number) {
+    this.currentVolume = Math.max(0, Math.min(1, volume));
     if (this.masterGain && this.ctx) {
-      const safeVol = Math.max(0, Math.min(1, volume));
-      this.masterGain.gain.setTargetAtTime(safeVol, this.ctx.currentTime, 0.1);
+      this.masterGain.gain.setTargetAtTime(this.currentVolume, this.ctx.currentTime, 0.1);
+    }
+    if (this.customAudioEl) {
+      this.customAudioEl.volume = this.currentVolume;
     }
   }
 
-  public playTrack(trackId: string) {
+  public playTrack(trackId: string, customAudioUrl?: string) {
     this.stop();
-    const ctx = this.initContext();
-    if (!ctx || !this.masterGain) return;
-
     this.currentTrackId = trackId;
     this.isRunning = true;
+
+    if (customAudioUrl) {
+      try {
+        this.customAudioEl = new Audio(customAudioUrl);
+        this.customAudioEl.loop = true;
+        this.customAudioEl.volume = this.currentVolume;
+        this.customAudioEl.play().catch((err) => {
+          console.warn('Audio URL playback failed, falling back to synth:', err);
+          const ctx = this.initContext();
+          if (ctx) this.startMoonlightLullaby(ctx);
+        });
+        return;
+      } catch (err) {
+        console.warn('Failed to load custom audio URL:', err);
+      }
+    }
+
+    const ctx = this.initContext();
+    if (!ctx || !this.masterGain) return;
 
     switch (trackId) {
       case 'desert-oasis':
@@ -130,11 +188,13 @@ class SleepAudioEngine {
         this.startForestRain(ctx);
         break;
       case 'cosmic-slumber':
+      case 'cosmic-stars-video':
         this.startCosmicSlumber(ctx);
         break;
       case 'bedtime-story-music':
         this.startBedtimeStoryMusic(ctx);
         break;
+      case 'lunar-twilight-video':
       case 'moonlight-lullaby':
       default:
         this.startMoonlightLullaby(ctx);
@@ -144,6 +204,17 @@ class SleepAudioEngine {
 
   public stop() {
     this.isRunning = false;
+
+    if (this.customAudioEl) {
+      try {
+        this.customAudioEl.pause();
+        this.customAudioEl.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      this.customAudioEl = null;
+    }
+
     // Clear all interval timers
     this.intervals.forEach((id) => clearInterval(id));
     this.intervals = [];

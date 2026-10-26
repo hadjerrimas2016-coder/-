@@ -101,12 +101,22 @@ export interface SunnahItem {
 
 export interface ShahrazadCharacter {
   id: string;
+  name: string;
   title: string;
   subtitle: string;
+  role: string;
+  avatarEmoji: string;
   image: string;
   storyId?: string;
   description: string;
   badge: string;
+  themeGradient: string;
+  accentColor: string;
+  borderGlow: string;
+  voiceQuote: string;
+  companionTip: string;
+  traits: string[];
+  visualAura?: string;
 }
 
 export interface PictureBookPage {
@@ -129,8 +139,11 @@ export interface PictureBook {
   creatorsAudioUrl?: string; // Official MP3 track
   moralLesson: string;
   pages: PictureBookPage[];
+  authorEmail?: string;
   updatedAt?: string;
   createdAt?: string;
+  gapBetweenPagesSec?: number;
+  fullStoryAudioUrl?: string;
 }
 
 export interface ShapeItem {
@@ -188,7 +201,7 @@ export interface UserAudioRecording {
   pageNumber?: number;
   createdAt: string;
   durationSec: number;
-  audioBlobUrl?: string;
+  audioBlobUrl: string;
   audioUrl?: string;
   scorePoints?: number;
 }
