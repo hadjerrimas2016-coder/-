@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Story, AppMode, ActiveTab, PictureBook, HeroVideoSettings, DEFAULT_HERO_VIDEO } from '../types';
+import { Story, AppMode, ActiveTab, PictureBook, HeroVideoSettings, DEFAULT_HERO_VIDEO, UserAudioRecording } from '../types';
 import { ShahrazadSection } from './ShahrazadSection';
 import { PictureBookBanner } from './PictureBookBanner';
 import { StarsRewardBanner } from './StarsRewardBanner';
@@ -51,6 +51,9 @@ interface HomeHeroProps {
   onOpenSleepRadio: () => void;
   onOpenMemorizeHelper: () => void;
   onOpenStoryAuthoring: () => void;
+  onEarnStars?: (amount: number) => void;
+  onSaveUserRecording?: (recording: UserAudioRecording) => void;
+  onOpenSubscription?: () => void;
 }
 
 export const HomeHero: React.FC<HomeHeroProps> = ({
@@ -69,6 +72,9 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   onOpenSleepRadio,
   onOpenMemorizeHelper,
   onOpenStoryAuthoring,
+  onEarnStars,
+  onSaveUserRecording,
+  onOpenSubscription,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [heroMode, setHeroMode] = useState<'video' | 'story'>('video');
@@ -554,6 +560,11 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
         starsCount={starsCount || 350}
         mode={mode}
         onOpenReadingClub={() => onSelectTab('reading_club')}
+        onOpenLibrary={() => onSelectTab('library')}
+        onOpenGames={() => onSelectTab('games')}
+        onEarnStars={onEarnStars}
+        onSaveUserRecording={onSaveUserRecording}
+        onOpenSubscription={onOpenSubscription}
       />
 
       {/* Picture Book Banner (كتاب مصور تفاعلي بالصفحات والصوت - Matching Screenshot 1) */}

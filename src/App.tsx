@@ -29,6 +29,8 @@ import { PictureBookModal } from './components/PictureBookModal';
 import { ReadingClub } from './components/ReadingClub';
 import { ForeignLanguagesCorner } from './components/ForeignLanguagesCorner';
 import { ShahrazadCorner } from './components/ShahrazadCorner';
+import { SubscriptionUpgradeModal } from './components/SubscriptionUpgradeModal';
+import { AuthModal } from './components/AuthModal';
 import { CookingCorner } from './components/CookingCorner';
 import { DEFAULT_COOKING_STORIES } from './data/cookingStoriesData';
 import { playSparkleSound } from './utils/audio';
@@ -109,6 +111,8 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [showPictureBook, setShowPictureBook] = useState<boolean>(false);
   const [openPictureBookPublisherDirect, setOpenPictureBookPublisherDirect] = useState<boolean>(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
   // Listen to Auth State
   useEffect(() => {
@@ -474,6 +478,8 @@ export default function App() {
         onSelectTab={setCurrentTab}
         onOpenSleepRadio={() => setShowSleepRadio(true)}
         onOpenAdmin={() => setShowAdminPanel(true)}
+        onOpenSubscription={() => setShowSubscriptionModal(true)}
+        onOpenAuthModal={() => setShowAuthModal(true)}
         currentUser={currentUser}
         isOwnerAdmin={isOwner}
         currentLang={currentLang}
@@ -514,6 +520,9 @@ export default function App() {
             onOpenSleepRadio={() => setShowSleepRadio(true)}
             onOpenMemorizeHelper={() => setShowMemorizeHelper(true)}
             onOpenStoryAuthoring={() => setShowStoryAuthoring(true)}
+            onEarnStars={handleEarnStars}
+            onSaveUserRecording={handleSaveUserRecording}
+            onOpenSubscription={() => setShowSubscriptionModal(true)}
           />
         )}
 
@@ -725,6 +734,25 @@ export default function App() {
           initialOpenPublisher={openPictureBookPublisherDirect}
         />
       )}
+
+      {/* Subscription & Free Account Plan Modal (خطة ترقية الحساب مع البقاء مجانياً) */}
+      {showSubscriptionModal && (
+        <SubscriptionUpgradeModal
+          mode={mode}
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          starsCount={starsCount}
+          onEarnStars={handleEarnStars}
+        />
+      )}
+
+      {/* Authentication & Login Modal (نافذة تسجيل الدخول وحساب المستخدم) */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={mode}
+        currentUser={currentUser}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AppMode, ActiveTab, SupportedLanguage } from '../types';
-import { Volume2, VolumeX, Sun, Moon, LogIn, Crown, Globe, ChevronDown, Check, Sparkles, Copy, Video } from 'lucide-react';
-import { playClickSound, playPopSound, setSoundMuted } from '../utils/audio';
+import { Volume2, VolumeX, Sun, Moon, LogIn, LogOut, Crown, Globe, ChevronDown, Check, Sparkles, Copy, Video, Key, UserCheck } from 'lucide-react';
+import { playClickSound, playPopSound, playSparkleSound, setSoundMuted } from '../utils/audio';
 import { User } from 'firebase/auth';
 import { AVAILABLE_LANGUAGES, TRANSLATIONS, applyGoogleTranslation } from '../utils/translations';
+import { loginWithGoogle, logoutUser } from '../firebase';
 
 interface HeaderProps {
   mode: AppMode;
@@ -19,6 +20,8 @@ interface HeaderProps {
   isOwnerAdmin?: boolean;
   currentLang: SupportedLanguage;
   onSelectLang: (lang: SupportedLanguage) => void;
+  onOpenSubscription?: () => void;
+  onOpenAuthModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -34,10 +37,38 @@ export const Header: React.FC<HeaderProps> = ({
   isOwnerAdmin,
   currentLang,
   onSelectLang,
+  onOpenSubscription,
+  onOpenAuthModal,
 }) => {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [domainCopied, setDomainCopied] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleDirectLogin = async () => {
+    try {
+      setIsLoggingIn(true);
+      playClickSound();
+      await loginWithGoogle();
+      playSparkleSound();
+    } catch (err: any) {
+      console.error(err);
+      if (onOpenAuthModal) onOpenAuthModal();
+      else alert(`تعذر تسجيل الدخول: ${err?.message || err}`);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleDirectLogout = async () => {
+    try {
+      playClickSound();
+      await logoutUser();
+      playPopSound();
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
 
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS.ar;
   const currentLangObj = AVAILABLE_LANGUAGES.find((l) => l.code === currentLang) || AVAILABLE_LANGUAGES[0];
@@ -81,10 +112,14 @@ export const Header: React.FC<HeaderProps> = ({
         <div
           onClick={() => {
             playClickSound();
-            onSelectTab('profile');
+            if (!currentUser && onOpenAuthModal) {
+              onOpenAuthModal();
+            } else {
+              onSelectTab('profile');
+            }
           }}
-          className="flex items-center gap-2.5 cursor-pointer group select-none"
-          title={t.myAccount}
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group select-none"
+          title={currentUser ? t.myAccount : 'تسجيل الدخول إلى حسابك'}
         >
           {/* Avatar with Ring Glow */}
           <div className="relative">
@@ -92,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
               <img
                 src={currentUser.photoURL}
                 alt={currentUser.displayName || t.myAccount}
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-amber-400 group-hover:scale-105 transition-transform"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-emerald-400 group-hover:scale-105 transition-transform"
               />
             ) : (
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 shadow-md group-hover:scale-105 transition-transform flex items-center justify-center">
@@ -101,16 +136,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
             )}
-            <span className="absolute -bottom-1 -right-1 text-xs">⭐</span>
+            <span className="absolute -bottom-1 -right-1 text-xs">
+              {currentUser ? '✨' : '🔑'}
+            </span>
           </div>
 
           <div className="flex flex-col text-right">
             <span
-              className={`text-xs sm:text-sm font-extrabold leading-tight ${
+              className={`text-xs sm:text-sm font-extrabold leading-tight flex items-center gap-1 ${
                 mode === 'day' ? 'text-indigo-950' : 'text-white'
               }`}
             >
-              {currentUser?.displayName || (currentLang === 'ar' ? 'رائد المستكشف' : 'Explorer Raed')}
+              <span>{currentUser?.displayName || (currentLang === 'ar' ? 'زائر (دخول)' : 'Guest (Login)')}</span>
+              {!currentUser && <span className="text-[10px] text-amber-400 font-bold">🔑</span>}
             </span>
             <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1">
               <span>{starsCount}</span>
@@ -232,6 +270,35 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
+          {/* Prominent Login / Sign-In Button (زر الدخول الأساسي للموقع) */}
+          {!currentUser ? (
+            <button
+              onClick={() => {
+                playClickSound();
+                if (onOpenAuthModal) {
+                  onOpenAuthModal();
+                } else {
+                  handleDirectLogin();
+                }
+              }}
+              disabled={isLoggingIn}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-amber-950 text-xs sm:text-sm font-black shadow-lg shadow-amber-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer ring-2 ring-amber-300"
+              title="تسجيل الدخول إلى الموقع"
+            >
+              <LogIn className="w-4 h-4 stroke-[2.5]" />
+              <span>{isLoggingIn ? 'جارٍ الدخول...' : (t.signIn || 'تسجيل الدخول')}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleDirectLogout}
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-white/10 hover:bg-rose-500/20 text-purple-200 hover:text-rose-300 border border-white/20 hover:border-rose-400 text-xs font-bold transition-all cursor-pointer"
+              title={t.signOut || 'تسجيل الخروج'}
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">{t.signOut || 'خروج'}</span>
+            </button>
+          )}
+
           {/* ONLY SHOWN TO OWNER: Protected Publishing & Firebase Portal */}
           {isOwnerAdmin && (
             <button
@@ -247,18 +314,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Sign In button for visitors who are not signed in */}
-          {!currentUser && (
+          {/* Subscription Plans & Upgrade (ترقية الاشتراك مع الحفاظ على الحساب المجاني) */}
+          {onOpenSubscription && (
             <button
               onClick={() => {
                 playClickSound();
-                onSelectTab('profile');
+                onOpenSubscription();
               }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-purple-200 hover:text-white border border-white/20 text-xs font-bold transition-all cursor-pointer"
-              title={t.signIn}
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 hover:brightness-110 text-amber-950 text-xs font-black shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              title="خطط الاشتراك والترقية (حسابك مجاني مدى الحياة)"
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t.signIn}</span>
+              <Crown className="w-3.5 h-3.5 fill-current" />
+              <span className="hidden sm:inline">الاشتراك 👑</span>
             </button>
           )}
 
