@@ -22,7 +22,11 @@ import {
   Square,
   Trash2,
   Check,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Upload,
+  Music,
+  Link2,
+  FileAudio
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -49,6 +53,8 @@ interface StoryModalProps {
   isFavorite: boolean;
   onToggleFavorite: (id: string) => void;
   onSaveUserRecording?: (recording: UserAudioRecording) => void;
+  isOwnerAdmin?: boolean;
+  onUpdateStory?: (updatedStory: Story) => void;
 }
 
 export const StoryModal: React.FC<StoryModalProps> = ({
@@ -59,16 +65,35 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   isFavorite,
   onToggleFavorite,
   onSaveUserRecording,
+  isOwnerAdmin,
+  onUpdateStory,
 }) => {
+  const fallbackCover = '/assets/aistudio/b4cdd488-0afa-42cf-ab73-78c16f31ccb6_5a07aa6c.png';
+  const [imgError, setImgError] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTimeSec, setCurrentTimeSec] = useState<number>(0);
-  const totalDurationSec = 300; // 5:00 simulated story track duration
+  const [totalDurationSec, setTotalDurationSec] = useState<number>(300);
   const [showReader, setShowReader] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [quizAnswered, setQuizAnswered] = useState<{ [qIdx: number]: number }>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [interactiveToast, setInteractiveToast] = useState<{ emoji: string; msg: string } | null>(null);
+
+  // Audio source: props, localStorage, or default
+  const [audioUrlState, setAudioUrlState] = useState<string>(() => {
+    if (story.audioUrl) return story.audioUrl;
+    try {
+      const savedAudio = localStorage.getItem(`raed_story_audio_${story.id}`);
+      if (savedAudio) return savedAudio;
+    } catch {}
+    return '';
+  });
+  const [showOwnerAudioUploader, setShowOwnerAudioUploader] = useState<boolean>(false);
+  const [customAudioInput, setCustomAudioInput] = useState<string>('');
+  const [audioSaveSuccess, setAudioSaveSuccess] = useState<string>('');
+
+  const mainAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fantasy Companion for Shahrazad Stories
   const isShahrazadStory = story.category === 'shahrazad';
@@ -98,10 +123,10 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     };
   }, [story.id, story.coverImage]);
 
-  // Audio timer simulation
+  // Audio timer simulation fallback when no real audio file is loaded
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (isPlaying) {
+    if (isPlaying && (!audioUrlState || !mainAudioRef.current)) {
       interval = setInterval(() => {
         setCurrentTimeSec((prev) => {
           if (prev >= totalDurationSec) {
@@ -115,7 +140,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPlaying, totalDurationSec]);
+  }, [isPlaying, totalDurationSec, audioUrlState]);
 
   // User Microphone Recording states for this story
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -265,13 +290,23 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   const handleTogglePlay = () => {
     playClickSound();
     if (!isPlaying) {
-      setIsPlaying(true);
-      // Also speak current page if in reader mode
-      if (showReader) {
+      if (audioUrlState && mainAudioRef.current) {
+        mainAudioRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => {
+          // Fallback to speech synthesis
+          speakCurrentPage();
+          setIsPlaying(true);
+        });
+      } else {
         speakCurrentPage();
+        setIsPlaying(true);
       }
     } else {
       setIsPlaying(false);
+      if (mainAudioRef.current) {
+        mainAudioRef.current.pause();
+      }
       stopArabicSpeech();
       setIsSpeaking(false);
     }
@@ -279,7 +314,59 @@ export const StoryModal: React.FC<StoryModalProps> = ({
 
   const handleSeek = (diff: number) => {
     playClickSound();
-    setCurrentTimeSec((prev) => Math.min(Math.max(0, prev + diff), totalDurationSec));
+    const nextTime = Math.min(Math.max(0, currentTimeSec + diff), totalDurationSec);
+    setCurrentTimeSec(nextTime);
+    if (mainAudioRef.current) {
+      mainAudioRef.current.currentTime = nextTime;
+    }
+  };
+
+  const handleOwnerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('audio/')) {
+      alert('يرجى اختيار ملف صوتي صالح (MP3, WAV, M4A, WebM)!');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setAudioUrlState(dataUrl);
+        setCustomAudioInput('');
+        setAudioSaveSuccess('تم تحميل الملف الصوتي! اضغط "حفظ التسجيل للقصة" لاعتماده 🎵');
+        playSparkleSound();
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleApplyAudioUrl = () => {
+    const trimmed = customAudioInput.trim();
+    if (!trimmed) return;
+    setAudioUrlState(trimmed);
+    setAudioSaveSuccess('تم تطبيق رابط الصوت! يمكنك معاينته ثم الضغط على حفظ 🎵');
+    playClickSound();
+  };
+
+  const handleSaveStoryAudio = () => {
+    if (!audioUrlState) return;
+    playSparkleSound();
+    confetti({ particleCount: 50, spread: 60 });
+    try {
+      localStorage.setItem(`raed_story_audio_${story.id}`, audioUrlState);
+    } catch {}
+    if (onUpdateStory) {
+      onUpdateStory({
+        ...story,
+        audioUrl: audioUrlState,
+      });
+    }
+    setAudioSaveSuccess('تم حفظ التسجيل الصوتي للقصة بنجاح في الموقع! 🌟');
+    setTimeout(() => {
+      setShowOwnerAudioUploader(false);
+      setAudioSaveSuccess('');
+    }, 2000);
   };
 
   const speakCurrentPage = () => {
@@ -414,29 +501,56 @@ export const StoryModal: React.FC<StoryModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-4 sm:p-5 max-h-[80vh] overflow-y-auto no-scrollbar space-y-4">
+          {/* Real HTML5 Story Audio Element */}
+          <audio
+            ref={mainAudioRef}
+            src={audioUrlState || undefined}
+            onTimeUpdate={() => {
+              if (mainAudioRef.current) {
+                setCurrentTimeSec(mainAudioRef.current.currentTime);
+              }
+            }}
+            onLoadedMetadata={() => {
+              if (mainAudioRef.current && !isNaN(mainAudioRef.current.duration) && mainAudioRef.current.duration > 0) {
+                setTotalDurationSec(mainAudioRef.current.duration);
+              }
+            }}
+            onEnded={() => {
+              setIsPlaying(false);
+              notifyStoryCompleted(story.title, story.moralLesson);
+              onEarnStars(20);
+            }}
+            onError={() => {
+              console.warn('Story audio source not reachable, will fallback to Arabic speech synthesizer');
+            }}
+          />
+
           {/* Main Story Hero Artwork Banner */}
           <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/10] bg-slate-900 border border-white/20 group">
             <img
-              src={coverUrl}
+              src={imgError ? fallbackCover : (coverUrl || fallbackCover)}
               alt={story.title}
+              onError={() => setImgError(true)}
               className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
             />
 
-            {/* Direct Cover Change Button */}
-            <div className="absolute top-3 left-3 z-20">
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setIsCoverPickerOpen(true);
-                }}
-                className="px-2.5 py-1.5 rounded-full text-xs font-bold bg-black/70 hover:bg-pink-600 text-white backdrop-blur-md border border-white/30 shadow-lg flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer"
-                title="تخصيص واختيار غلاف القصة بنفسك 🎨"
-              >
-                <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
-                <span>تغيير الغلاف 🖼️</span>
-              </button>
-            </div>
+            {/* Direct Cover Change Button - STRICTLY RESTRICTED TO OWNER */}
+            {isOwnerAdmin && (
+              <div className="absolute top-3 left-3 z-20">
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    setIsCoverPickerOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-full text-xs font-black bg-black/80 hover:bg-amber-500 text-amber-300 hover:text-white backdrop-blur-md border border-amber-400/80 shadow-lg flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer ring-2 ring-amber-400/40"
+                  title="تخصيص واختيار غلاف القصة كمالكة للموقع 👑"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
+                  <span>تغيير الغلاف (المالكة) 👑</span>
+                </button>
+              </div>
+            )}
 
             {/* Story Title Overlay (Matching Attachment 1) */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-4">
@@ -456,6 +570,105 @@ export const StoryModal: React.FC<StoryModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* OWNER-ONLY AUDIO ATTACHMENT BOX */}
+          {isOwnerAdmin && (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/70 via-purple-950/70 to-amber-900/60 border-2 border-amber-400/70 shadow-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
+                    <Music className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-amber-300 flex items-center gap-1">
+                      <span>إرفاق الملف الصوتي للقصة (خاص بمالكة الموقع)</span>
+                      <span>👑</span>
+                    </h4>
+                    <p className="text-[10px] text-amber-200/80">
+                      {audioUrlState ? '✅ يوجد ملف صوتي مرتبط بهذه القصة' : '⚠️ لم يتم إرفاق ملف صوتي بعد (يتم استخدام الراوي التلقائي)'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOwnerAudioUploader(!showOwnerAudioUploader)}
+                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 text-xs font-black shadow transition-all hover:scale-105"
+                >
+                  {showOwnerAudioUploader ? 'إخفاء' : 'إرفاق صوت 🎵'}
+                </button>
+              </div>
+
+              {audioSaveSuccess && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/30 border border-emerald-400 text-emerald-200 text-xs font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-300" />
+                  <span>{audioSaveSuccess}</span>
+                </div>
+              )}
+
+              {showOwnerAudioUploader && (
+                <div className="pt-2 border-t border-amber-400/30 space-y-3 text-xs animate-in fade-in duration-200">
+                  {/* File Upload Option */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-200 mb-1">
+                      1. رفع ملف صوتي من جهازك (MP3, M4A, WAV):
+                    </label>
+                    <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-900/40 hover:bg-amber-900/60 border border-dashed border-amber-400/60 text-amber-200 font-bold cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-amber-400" />
+                      <span>اختيار ملف صوتي من جهازك 📁</span>
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        onChange={handleOwnerFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Or Direct Link Option */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-200 mb-1">
+                      2. أو كتابة رابط مباشر لملف الصوت (URL):
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        placeholder="https://example.com/audio.mp3"
+                        value={customAudioInput}
+                        onChange={(e) => setCustomAudioInput(e.target.value)}
+                        className="flex-grow px-3 py-2 rounded-xl bg-black/40 border border-amber-400/40 text-white placeholder-white/40 text-xs focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyAudioUrl}
+                        className="px-3 py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold border border-amber-400/50"
+                      >
+                        تطبيق
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Current Audio Preview and Save */}
+                  {audioUrlState && (
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-amber-400/30 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-amber-300">معاينة الصوت المرفق:</span>
+                        <audio controls src={audioUrlState} className="h-7 max-w-[200px]" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveStoryAudio}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-amber-950 font-black text-xs shadow-lg flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>حفظ هذا التسجيل الصوتي للقصة في الموقع 💾</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Shahrazad Fantasy Companion Listening Buddy & Background Aura */}
           {isShahrazadStory && (
@@ -902,7 +1115,12 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         defaultCover={story.coverImage}
         isOpen={isCoverPickerOpen}
         onClose={() => setIsCoverPickerOpen(false)}
-        onCoverUpdated={(newCover) => setCoverUrl(newCover)}
+        onCoverUpdated={(newCover) => {
+          setCoverUrl(newCover);
+          if (onUpdateStory) {
+            onUpdateStory({ ...story, coverImage: newCover });
+          }
+        }}
       />
     </div>
   );

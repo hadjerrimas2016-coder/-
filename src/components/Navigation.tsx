@@ -13,7 +13,8 @@ import {
   Users,
   Crown,
   UtensilsCrossed,
-  Trophy
+  Trophy,
+  PenTool
 } from 'lucide-react';
 import { playClickSound } from '../utils/audio';
 
@@ -27,6 +28,7 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ currentTab, onSelectTab, mode }) => {
   const tabs = [
     { id: 'home' as ActiveTab, label: 'الرئيسية', icon: Home },
+    { id: 'my_story' as ActiveTab, label: 'ركن قصتي 📖✨', icon: PenTool, badge: 'AI' },
     { id: 'challenges' as ActiveTab, label: 'خريطة التحديات 🎯', icon: Trophy, badge: '3D' },
     { id: 'cooking' as ActiveTab, label: 'قصص الطبخ 🍲', icon: UtensilsCrossed, badge: 'فيديو' },
     { id: 'shahrazad' as ActiveTab, label: 'عالم شهرزاد 👸', icon: Crown, badge: 'ألف ليلة' },

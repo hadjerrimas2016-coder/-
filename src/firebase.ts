@@ -24,8 +24,14 @@ export const googleProvider = new GoogleAuthProvider();
 export const OWNER_ADMIN_EMAIL = 'hadjerrimas2016@gmail.com';
 
 export function isOwnerAdmin(user: User | null): boolean {
-  if (!user || !user.email) return false;
-  return user.email.toLowerCase() === OWNER_ADMIN_EMAIL.toLowerCase();
+  if (user && user.email && user.email.trim().toLowerCase() === OWNER_ADMIN_EMAIL.toLowerCase()) {
+    return true;
+  }
+  const current = auth.currentUser;
+  if (current && current.email && current.email.trim().toLowerCase() === OWNER_ADMIN_EMAIL.toLowerCase()) {
+    return true;
+  }
+  return false;
 }
 
 // Category collection IDs mapping

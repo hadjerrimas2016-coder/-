@@ -42,6 +42,7 @@ import { ShahrazadCharacterAvatar } from './ShahrazadCharacterAvatar';
 interface GamesCornerProps {
   mode: AppMode;
   onEarnStars: (amount: number) => void;
+  onOpenCarRacing?: () => void;
 }
 
 // ---------------- GAME 2: MEMORY CARDS DATA ----------------
@@ -204,7 +205,7 @@ export interface CustomUserGame {
   emoji: string;
 }
 
-export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars }) => {
+export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars, onOpenCarRacing }) => {
   const [selectedGame, setSelectedGame] = useState<
     'spaceRunner' | 'memory3D' | 'wordAlchemist' | 'mathWizard' | 'shadowMatch' | 'reflexCatcher' | 'customGames'
   >('spaceRunner');
@@ -686,8 +687,24 @@ export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars }) =
           </div>
         </div>
 
-        {/* Action Button: Create New Game */}
-        <div className="flex items-center gap-2">
+        {/* Action Buttons: 3D Car Racing & Create New Game */}
+        <div className="flex flex-wrap items-center gap-2">
+          {onOpenCarRacing && (
+            <button
+              type="button"
+              onClick={() => {
+                playSparkleSound();
+                onOpenCarRacing();
+              }}
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-xl shadow-red-950/50 cursor-pointer transition-all hover:scale-105 active:scale-95 animate-pulse border border-yellow-300/40"
+              title="العب سباق سيارات الأبطال ثلاثي الأبعاد 🏎️"
+            >
+              <span className="text-base">🏎️</span>
+              <span>سباق سيارات 3D المتطور</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold">Three.js</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => {
@@ -705,6 +722,19 @@ export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars }) =
 
       {/* Game Selector Tabs Carousel */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        {onOpenCarRacing && (
+          <button
+            onClick={() => {
+              playSparkleSound();
+              onOpenCarRacing();
+            }}
+            className="px-4 py-2 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap bg-gradient-to-r from-rose-600 to-amber-500 text-white shadow-lg hover:scale-105 border border-yellow-300/40"
+          >
+            <span>🏎️</span>
+            <span>سباق سيارات 3D 🏆</span>
+          </button>
+        )}
+
         <button
           onClick={() => {
             playClickSound();

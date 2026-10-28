@@ -11,6 +11,8 @@ interface StoryCardProps {
   onOpenStory: (story: Story) => void;
   isFavorite: boolean;
   onToggleFavorite: (id: string) => void;
+  isOwnerAdmin?: boolean;
+  onSaveStory?: (updatedStory: Story) => void;
 }
 
 export const StoryCard: React.FC<StoryCardProps> = ({
@@ -19,19 +21,24 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   onOpenStory,
   isFavorite,
   onToggleFavorite,
+  isOwnerAdmin,
+  onSaveStory,
 }) => {
   const [coverUrl, setCoverUrl] = useState<string>(() =>
     getStoryCover(story.id, story.coverImage)
   );
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState<boolean>(false);
+  const [imgError, setImgError] = useState<boolean>(false);
 
   useEffect(() => {
     // Update local state when prop changes
     setCoverUrl(getStoryCover(story.id, story.coverImage));
+    setImgError(false);
 
     const handleCustomCoverEvent = (e: any) => {
       if (e.detail && e.detail.storyId === story.id) {
         setCoverUrl(e.detail.coverUrl || story.coverImage);
+        setImgError(false);
       }
     };
 
@@ -55,13 +62,22 @@ export const StoryCard: React.FC<StoryCardProps> = ({
         }`}
       >
         {/* Top Image Thumbnail */}
-        <div className="relative aspect-[16/11] overflow-hidden bg-slate-900">
-          <img
-            src={coverUrl}
-            alt={story.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
-            loading="lazy"
-          />
+        <div className="relative aspect-[16/11] overflow-hidden bg-slate-900 flex items-center justify-center">
+          {coverUrl && !imgError ? (
+            <img
+              src={coverUrl}
+              alt={story.title}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-tr from-purple-950 via-indigo-950 to-slate-900 flex flex-col items-center justify-center p-3 text-center space-y-1">
+              <span className="text-3xl">{story.categoryIcon || '📚'}</span>
+              <span className="text-xs font-black text-amber-300 line-clamp-1">{story.title}</span>
+              <span className="text-[10px] text-purple-300/70">{story.categoryLabel}</span>
+            </div>
+          )}
 
           {/* Top Badges (Duration & Category) */}
           <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between pointer-events-none">
@@ -85,20 +101,22 @@ export const StoryCard: React.FC<StoryCardProps> = ({
             </span>
           </div>
 
-          {/* Quick Cover Change Button on Card */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              playClickSound();
-              setIsCoverPickerOpen(true);
-            }}
-            className="absolute bottom-2.5 left-2.5 z-10 px-2 py-1 rounded-full text-[10px] font-black bg-black/70 hover:bg-pink-600 text-purple-100 hover:text-white backdrop-blur-md border border-white/20 shadow-md flex items-center gap-1 transition-all cursor-pointer opacity-85 group-hover:opacity-100 hover:scale-105"
-            title="تغيير غلاف هذه القصة بنفسك 🎨"
-          >
-            <ImageIcon className="w-3 h-3 text-amber-300" />
-            <span>تغيير الغلاف 🖼️</span>
-          </button>
+          {/* Quick Cover Change Button on Card - ONLY SHOWN TO OWNER */}
+          {isOwnerAdmin && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                playClickSound();
+                setIsCoverPickerOpen(true);
+              }}
+              className="absolute bottom-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 backdrop-blur-md border border-amber-300 shadow-md flex items-center gap-1 transition-all cursor-pointer hover:scale-105 ring-1 ring-amber-400/50"
+              title="تغيير غلاف هذه القصة (خاص بمالكة الموقع فقط) 👑"
+            >
+              <ImageIcon className="w-3 h-3 text-amber-950" />
+              <span>تغيير الغلاف 👑</span>
+            </button>
+          )}
 
           {/* Big Play Overlay Icon */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/25 backdrop-blur-[1px]">
@@ -139,20 +157,22 @@ export const StoryCard: React.FC<StoryCardProps> = ({
             </span>
 
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playClickSound();
-                  setIsCoverPickerOpen(true);
-                }}
-                className={`p-1.5 rounded-full transition-transform active:scale-80 hover:bg-white/20 ${
-                  mode === 'day' ? 'text-slate-500 hover:text-amber-500' : 'text-purple-300 hover:text-amber-300'
-                }`}
-                title="تخصيص غلاف القصة"
-              >
-                <ImageIcon className="w-4 h-4" />
-              </button>
+              {isOwnerAdmin && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playClickSound();
+                    setIsCoverPickerOpen(true);
+                  }}
+                  className={`p-1.5 rounded-full transition-transform active:scale-80 hover:bg-white/20 ${
+                    mode === 'day' ? 'text-amber-600 hover:text-amber-500' : 'text-amber-400 hover:text-amber-300'
+                  }`}
+                  title="تخصيص غلاف القصة (المالكة) 👑"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </button>
+              )}
 
               <button
                 type="button"
@@ -174,15 +194,23 @@ export const StoryCard: React.FC<StoryCardProps> = ({
       </div>
 
       {/* Cover Picker Modal */}
-      <StoryCoverPickerModal
-        storyId={story.id}
-        storyTitle={story.title}
-        currentCover={coverUrl}
-        defaultCover={story.coverImage}
-        isOpen={isCoverPickerOpen}
-        onClose={() => setIsCoverPickerOpen(false)}
-        onCoverUpdated={(newCover) => setCoverUrl(newCover)}
-      />
+      {isOwnerAdmin && (
+        <StoryCoverPickerModal
+          storyId={story.id}
+          storyTitle={story.title}
+          currentCover={coverUrl}
+          defaultCover={story.coverImage}
+          isOpen={isCoverPickerOpen}
+          onClose={() => setIsCoverPickerOpen(false)}
+          onCoverUpdated={(newCover) => {
+            setCoverUrl(newCover);
+            setImgError(false);
+            if (onSaveStory) {
+              onSaveStory({ ...story, coverImage: newCover });
+            }
+          }}
+        />
+      )}
     </>
   );
 };

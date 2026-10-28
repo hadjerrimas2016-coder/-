@@ -33,6 +33,8 @@ import { SubscriptionUpgradeModal } from './components/SubscriptionUpgradeModal'
 import { AuthModal } from './components/AuthModal';
 import { CookingCorner } from './components/CookingCorner';
 import { DEFAULT_COOKING_STORIES } from './data/cookingStoriesData';
+import { MyStoryCorner } from './components/MyStoryCorner';
+import { CarRacingGameModal } from './components/CarRacingGameModal';
 import { playSparkleSound } from './utils/audio';
 import {
   auth,
@@ -523,6 +525,8 @@ export default function App() {
             onEarnStars={handleEarnStars}
             onSaveUserRecording={handleSaveUserRecording}
             onOpenSubscription={() => setShowSubscriptionModal(true)}
+            isOwnerAdmin={isOwner}
+            onUpdatePictureBook={handleSavePictureBook}
           />
         )}
 

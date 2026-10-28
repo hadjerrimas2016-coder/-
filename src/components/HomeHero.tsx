@@ -54,6 +54,8 @@ interface HomeHeroProps {
   onEarnStars?: (amount: number) => void;
   onSaveUserRecording?: (recording: UserAudioRecording) => void;
   onOpenSubscription?: () => void;
+  isOwnerAdmin?: boolean;
+  onUpdatePictureBook?: (updatedBook: PictureBook) => void;
 }
 
 export const HomeHero: React.FC<HomeHeroProps> = ({
@@ -75,6 +77,8 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   onEarnStars,
   onSaveUserRecording,
   onOpenSubscription,
+  isOwnerAdmin,
+  onUpdatePictureBook,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [heroMode, setHeroMode] = useState<'video' | 'story'>('video');
@@ -572,6 +576,8 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
         book={pictureBook}
         mode={mode}
         onOpenBook={onOpenPictureBook}
+        isOwnerAdmin={isOwnerAdmin}
+        onUpdateBook={onUpdatePictureBook}
       />
 
       {/* Primary Feature Cards Grid */}

@@ -5,7 +5,7 @@ export const DEFAULT_PICTURE_BOOK: PictureBook = {
   title: 'قصة ليان وسر الجوهرة المصونة',
   subtitle: 'تصفّح الحكاية صفحة بصفحة كرسوم كرتونية ساحرة مع نصوص مشكولة. استمع بصوت الراوي 🎧 . وسجّل قراءتك بصوتك لكسب 40+ نقطة خيال!',
   badge: 'كتاب مصوّر تفاعلي بالصفحات والصوت',
-  coverImage: '/assets/aistudio/Capture_d__cran_2026-10-20_135700_a8f3d8ee.png',
+  coverImage: '/assets/aistudio/b4cdd488-0afa-42cf-ab73-78c16f31ccb6_5a07aa6c.png',
   ageRange: '8 - 14 سنة',
   totalPages: 10,
   creatorsAudioUrl: '',

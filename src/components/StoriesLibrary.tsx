@@ -26,6 +26,9 @@ interface StoriesLibraryProps {
   onToggleFavorite: (id: string) => void;
   pictureBook?: PictureBook;
   onOpenPictureBook?: () => void;
+  isOwnerAdmin?: boolean;
+  onSaveStory?: (updatedStory: Story) => void;
+  onUpdatePictureBook?: (updatedBook: PictureBook) => void;
 }
 
 export const StoriesLibrary: React.FC<StoriesLibraryProps> = ({
@@ -36,6 +39,9 @@ export const StoriesLibrary: React.FC<StoriesLibraryProps> = ({
   onToggleFavorite,
   pictureBook,
   onOpenPictureBook,
+  isOwnerAdmin,
+  onSaveStory,
+  onUpdatePictureBook,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -66,6 +72,8 @@ export const StoriesLibrary: React.FC<StoriesLibraryProps> = ({
           book={pictureBook}
           mode={mode}
           onOpenBook={onOpenPictureBook}
+          isOwnerAdmin={isOwnerAdmin}
+          onUpdateBook={onUpdatePictureBook}
         />
       )}
       {/* Search & Quick Filters Bar */}
@@ -171,6 +179,8 @@ export const StoriesLibrary: React.FC<StoriesLibraryProps> = ({
               onOpenStory={onOpenStory}
               isFavorite={favorites.includes(story.id)}
               onToggleFavorite={onToggleFavorite}
+              isOwnerAdmin={isOwnerAdmin}
+              onSaveStory={onSaveStory}
             />
           ))}
         </div>
@@ -221,8 +231,11 @@ export const StoriesLibrary: React.FC<StoriesLibraryProps> = ({
             >
               <div className="flex items-center gap-3">
                 <img
-                  src={st.coverImage}
+                  src={st.coverImage || '/assets/aistudio/b4cdd488-0afa-42cf-ab73-78c16f31ccb6_5a07aa6c.png'}
                   alt={st.title}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = '/assets/aistudio/b4cdd488-0afa-42cf-ab73-78c16f31ccb6_5a07aa6c.png';
+                  }}
                   className="w-16 h-14 rounded-xl object-cover"
                 />
                 <div>

@@ -6,6 +6,7 @@ export type ActiveTab =
   | 'reading_club'
   | 'foreign_languages'
   | 'shahrazad'
+  | 'my_story'
   | 'library'
   | 'games'
   | 'sunnah'

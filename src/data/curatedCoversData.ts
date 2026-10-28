@@ -12,6 +12,32 @@ export interface CuratedCoverCategory {
 
 export const CURATED_COVER_CATEGORIES: CuratedCoverCategory[] = [
   {
+    category: 'أنا بطلة قصتي وليان 💖',
+    badge: 'ليان',
+    images: [
+      {
+        id: 'cov-layan-hero',
+        title: 'ليان - أنا بطلة قصتي (قصص أحلام مغامرات)',
+        url: '/assets/aistudio/b4cdd488-0afa-42cf-ab73-78c16f31ccb6_5a07aa6c.png',
+      },
+      {
+        id: 'cov-layan-jewel',
+        title: 'ليان وسر الجوهرة المصونة',
+        url: '/assets/aistudio/Capture_d__cran_2026-10-20_135700_a8f3d8ee.png',
+      },
+      {
+        id: 'cov-layan-morning',
+        title: 'المسير الصباحي والمدرسة',
+        url: '/assets/aistudio/Capture_d__cran_2026-10-20_135742_9bb46748.png',
+      },
+      {
+        id: 'cov-layan-market',
+        title: 'سوق الأقمشة والياسمين',
+        url: '/assets/aistudio/Capture_d__cran_2026-10-17_165435_21ae23c9.png',
+      },
+    ],
+  },
+  {
     category: 'خيال وسحر وقلاع 🏰',
     badge: 'خيال',
     images: [
