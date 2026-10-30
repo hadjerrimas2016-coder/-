@@ -35,6 +35,7 @@ import { CookingCorner } from './components/CookingCorner';
 import { DEFAULT_COOKING_STORIES } from './data/cookingStoriesData';
 import { MyStoryCorner } from './components/MyStoryCorner';
 import { CarRacingGameModal } from './components/CarRacingGameModal';
+import { CookingGameModal } from './components/CookingGameModal';
 import { playSparkleSound } from './utils/audio';
 import {
   auth,
@@ -121,6 +122,7 @@ export default function App() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [showCarRacingGame, setShowCarRacingGame] = useState<boolean>(false);
+  const [showCookingGame, setShowCookingGame] = useState<boolean>(false);
 
   // Listen to Auth State
   useEffect(() => {
@@ -539,6 +541,7 @@ export default function App() {
             isOwnerAdmin={isOwner}
             onUpdatePictureBook={handleSavePictureBook}
             onOpenCarRacing={() => setShowCarRacingGame(true)}
+            onOpenCookingGame={() => setShowCookingGame(true)}
           />
         )}
 
@@ -582,6 +585,7 @@ export default function App() {
             onEarnStars={handleEarnStars}
             onSaveUserRecording={handleSaveUserRecording}
             onOpenAdmin={() => setShowAdminPanel(true)}
+            onOpenCookingGame={() => setShowCookingGame(true)}
           />
         )}
 
@@ -644,6 +648,7 @@ export default function App() {
             mode={mode}
             onEarnStars={handleEarnStars}
             onOpenCarRacing={() => setShowCarRacingGame(true)}
+            onOpenCookingGame={() => setShowCookingGame(true)}
           />
         )}
 
@@ -681,6 +686,14 @@ export default function App() {
         isOpen={showCarRacingGame}
         onClose={() => setShowCarRacingGame(false)}
         onEarnStars={handleEarnStars}
+      />
+
+      {/* Chef Cooking Simulator Mini Game Modal (لعبة مطبخ الشيف الصغير 🍳✨) */}
+      <CookingGameModal
+        isOpen={showCookingGame}
+        onClose={() => setShowCookingGame(false)}
+        onEarnStars={(amt) => handleEarnStars(amt)}
+        mode={mode}
       />
 
       {/* Sleep Radio Modal (راديو النوم 🌙) */}

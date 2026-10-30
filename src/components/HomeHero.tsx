@@ -58,6 +58,7 @@ interface HomeHeroProps {
   isOwnerAdmin?: boolean;
   onUpdatePictureBook?: (updatedBook: PictureBook) => void;
   onOpenCarRacing?: () => void;
+  onOpenCookingGame?: () => void;
 }
 
 export const HomeHero: React.FC<HomeHeroProps> = ({
@@ -82,6 +83,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   isOwnerAdmin,
   onUpdatePictureBook,
   onOpenCarRacing,
+  onOpenCookingGame,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [heroMode, setHeroMode] = useState<'video' | 'story'>('video');
@@ -477,6 +479,21 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 <span>📖✨</span>
                 <span>ركن قصتي (تأليف بالذكاء الاصطناعي)</span>
               </button>
+
+              {/* Chef Cooking Game button */}
+              {onOpenCookingGame && (
+                <button
+                  onClick={() => {
+                    playSparkleSound();
+                    onOpenCookingGame();
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-pink-950/50 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-pink-300/40"
+                >
+                  <span className="text-base">🍳</span>
+                  <span>لعبة مطبخ الشيف</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">جديد</span>
+                </button>
+              )}
 
               {/* 3D Car Racing Game button */}
               {onOpenCarRacing && (

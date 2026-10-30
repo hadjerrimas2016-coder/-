@@ -46,6 +46,7 @@ interface CookingCornerProps {
   onOpenAdminPublish?: (category?: string) => void;
   onSaveUserRecording?: (recording: UserAudioRecording) => void;
   isOwnerAdmin?: boolean;
+  onOpenCookingGame?: () => void;
 }
 
 export const CookingCorner: React.FC<CookingCornerProps> = ({
@@ -59,6 +60,7 @@ export const CookingCorner: React.FC<CookingCornerProps> = ({
   onOpenAdminPublish,
   onSaveUserRecording,
   isOwnerAdmin = false,
+  onOpenCookingGame,
 }) => {
   // Combine cloud stories with category 'cooking' + default cooking stories
   const cloudCookingStories = stories.filter((s) => s.category === 'cooking');
@@ -327,6 +329,59 @@ export const CookingCorner: React.FC<CookingCornerProps> = ({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-center rounded-2xl">
               <span className="text-xs font-black text-amber-300">الشيف الصغير 👨‍🍳</span>
               <span className="text-[10px] text-amber-100/90">{selectedStory.badge || 'فيديو وقصة'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* INTERACTIVE COOKING GAME BANNER (مطبخ الشيف الصغير - برغر وسوشي وفطائر) */}
+      <div
+        onClick={() => {
+          playSparkleSound();
+          if (onOpenCookingGame) onOpenCookingGame();
+        }}
+        className="group relative rounded-3xl overflow-hidden p-4 sm:p-6 border-2 border-pink-400 bg-gradient-to-r from-[#3d122e] via-[#2c0d24] to-[#1a0816] text-white shadow-2xl cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:border-pink-300 shadow-pink-950/60"
+      >
+        <div className="absolute top-0 right-1/4 w-72 h-32 bg-pink-500/20 blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-5">
+          {/* Right Text */}
+          <div className="space-y-2 text-center md:text-right flex-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/30 border border-pink-400/50 text-pink-300 text-xs font-black">
+              <span>🎮 لعبة تفاعلية جديدة</span>
+              <span>⭐ +35 نقطة خيال</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-yellow-200 to-amber-300">
+              لعبة مطبخ الشيف الصغير 🍳✨
+            </h2>
+            <p className="text-xs sm:text-sm text-pink-100/90 leading-relaxed font-medium">
+              ادخل المطبخ الوردي الجميل! اشوِ شرائح اللحم بالمقلاة والملعقة الفضية 🥩، لف رولات السوشي بالخيزران 🍣، وافرد العجين بالشوبك واخبز الفطيرة اللذيذة بالميكروويف 🥧!
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playSparkleSound();
+                  if (onOpenCookingGame) onOpenCookingGame();
+                }}
+                className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-400 hover:to-amber-400 text-white font-black text-xs sm:text-sm shadow-xl shadow-pink-600/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 mx-auto md:mx-0 cursor-pointer border border-pink-200/50"
+              >
+                <span>العب الآن في مطبخ الشيف الصغير 🍳🎮</span>
+                <Sparkles className="w-4 h-4 text-yellow-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Left Preview Image matching screenshot */}
+          <div className="relative w-44 h-36 sm:w-56 sm:h-44 rounded-2xl overflow-hidden border-2 border-pink-400/80 shadow-2xl flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+            <img
+              src="/assets/aistudio/download__41__61119501.jfif"
+              alt="لعبة مطبخ الشيف الصغير"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="absolute bottom-2 inset-x-2 py-1 rounded-xl bg-black/75 backdrop-blur text-center text-[10px] font-black text-amber-300 border border-amber-300/40">
+              انقر لبدء لعبة الطبخ 🍳
             </div>
           </div>
         </div>

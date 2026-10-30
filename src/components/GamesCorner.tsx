@@ -43,6 +43,7 @@ interface GamesCornerProps {
   mode: AppMode;
   onEarnStars: (amount: number) => void;
   onOpenCarRacing?: () => void;
+  onOpenCookingGame?: () => void;
 }
 
 // ---------------- GAME 2: MEMORY CARDS DATA ----------------
@@ -205,7 +206,7 @@ export interface CustomUserGame {
   emoji: string;
 }
 
-export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars, onOpenCarRacing }) => {
+export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars, onOpenCarRacing, onOpenCookingGame }) => {
   const [selectedGame, setSelectedGame] = useState<
     'spaceRunner' | 'memory3D' | 'wordAlchemist' | 'mathWizard' | 'shadowMatch' | 'reflexCatcher' | 'customGames'
   >('spaceRunner');
@@ -687,8 +688,24 @@ export const GamesCorner: React.FC<GamesCornerProps> = ({ mode, onEarnStars, onO
           </div>
         </div>
 
-        {/* Action Buttons: 3D Car Racing & Create New Game */}
+        {/* Action Buttons: 3D Car Racing, Cooking Chef Game & Create New Game */}
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenCookingGame && (
+            <button
+              type="button"
+              onClick={() => {
+                playSparkleSound();
+                onOpenCookingGame();
+              }}
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-400 hover:to-amber-400 text-white text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-xl shadow-pink-950/50 cursor-pointer transition-all hover:scale-105 active:scale-95 border border-pink-300/40"
+              title="العب لعبة مطبخ الشيف الصغير 🍳✨"
+            >
+              <span className="text-base">🍳</span>
+              <span>مطبخ الشيف الصغير</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold">برغر وسوشي وفطائر</span>
+            </button>
+          )}
+
           {onOpenCarRacing && (
             <button
               type="button"
