@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Story, AppMode, ActiveTab, PictureBook, HeroVideoSettings, DEFAULT_HERO_VIDEO, UserAudioRecording } from '../types';
 import { ShahrazadSection } from './ShahrazadSection';
+import { ARABIAN_NIGHTS_STORIES } from './ShahrazadCorner';
 import { PictureBookBanner } from './PictureBookBanner';
 import { StarsRewardBanner } from './StarsRewardBanner';
 import {
@@ -56,6 +57,7 @@ interface HomeHeroProps {
   onOpenSubscription?: () => void;
   isOwnerAdmin?: boolean;
   onUpdatePictureBook?: (updatedBook: PictureBook) => void;
+  onOpenCarRacing?: () => void;
 }
 
 export const HomeHero: React.FC<HomeHeroProps> = ({
@@ -79,6 +81,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   onOpenSubscription,
   isOwnerAdmin,
   onUpdatePictureBook,
+  onOpenCarRacing,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [heroMode, setHeroMode] = useState<'video' | 'story'>('video');
@@ -116,7 +119,17 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
   const inProgressStories = stories.slice(0, 3);
 
   const handleOpenById = (id: string) => {
-    const found = stories.find((s) => s.id === id);
+    playClickSound();
+    let found = stories.find((s) => s.id === id);
+    if (!found) {
+      found = ARABIAN_NIGHTS_STORIES.find((s) => s.id === id);
+    }
+    if (!found && id === 'shahrazad') {
+      found = stories.find((s) => s.category === 'shahrazad') || ARABIAN_NIGHTS_STORIES[0];
+    }
+    if (!found) {
+      found = stories.find((s) => s.id.includes(id) || id.includes(s.id)) || stories[0];
+    }
     if (found) {
       onOpenStory(found);
     }
@@ -453,6 +466,33 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 <span>ركن السُنّة النبوية</span>
               </button>
 
+              {/* My Story AI Corner Button */}
+              <button
+                onClick={() => {
+                  playSparkleSound();
+                  onSelectTab('my_story');
+                }}
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-pink-900/40 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-pink-400/40"
+              >
+                <span>📖✨</span>
+                <span>ركن قصتي (تأليف بالذكاء الاصطناعي)</span>
+              </button>
+
+              {/* 3D Car Racing Game button */}
+              {onOpenCarRacing && (
+                <button
+                  onClick={() => {
+                    playSparkleSound();
+                    onOpenCarRacing();
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-rose-950/50 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-yellow-300/40"
+                >
+                  <span className="text-base">🏎️</span>
+                  <span>سباق سيارات 3D</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">جديد</span>
+                </button>
+              )}
+
               {/* Space 3D Game button */}
               <button
                 onClick={() => {
@@ -554,6 +594,20 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 <span>لعبة الفضاء 3D</span>
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               </button>
+
+              {onOpenCarRacing && (
+                <button
+                  onClick={() => {
+                    playSparkleSound();
+                    onOpenCarRacing();
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-rose-950/50 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-yellow-300/40"
+                >
+                  <span className="text-base">🏎️</span>
+                  <span>سباق سيارات 3D</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px]">جديد</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

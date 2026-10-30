@@ -26,7 +26,9 @@ import {
   Upload,
   Music,
   Link2,
-  FileAudio
+  FileAudio,
+  Video,
+  Film
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -92,6 +94,22 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   const [showOwnerAudioUploader, setShowOwnerAudioUploader] = useState<boolean>(false);
   const [customAudioInput, setCustomAudioInput] = useState<string>('');
   const [audioSaveSuccess, setAudioSaveSuccess] = useState<string>('');
+
+  // 16:9 Video source: props, localStorage, or default
+  const [videoUrlState, setVideoUrlState] = useState<string>(() => {
+    if (story.videoUrl) return story.videoUrl;
+    try {
+      const savedVideo = localStorage.getItem(`raed_story_video_${story.id}`);
+      if (savedVideo) return savedVideo;
+    } catch {}
+    return '';
+  });
+  const [activeMediaMode, setActiveMediaMode] = useState<'reader' | 'video'>(() => {
+    return story.videoUrl ? 'video' : 'reader';
+  });
+  const [showOwnerVideoUploader, setShowOwnerVideoUploader] = useState<boolean>(false);
+  const [customVideoInput, setCustomVideoInput] = useState<string>('');
+  const [videoSaveSuccess, setVideoSaveSuccess] = useState<string>('');
 
   const mainAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -369,6 +387,54 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     }, 2000);
   };
 
+  const handleOwnerVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('video/')) {
+      alert('يرجى اختيار ملف فيديو صالح (MP4, WebM, MOV)!');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setVideoUrlState(dataUrl);
+        setCustomVideoInput('');
+        setVideoSaveSuccess('تم تحميل الفيديو 16:9 بنجاح! اضغط "حفظ فيديو القصة 16:09" لاعتماده 🎬');
+        playSparkleSound();
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleApplyVideoUrl = () => {
+    const trimmed = customVideoInput.trim();
+    if (!trimmed) return;
+    setVideoUrlState(trimmed);
+    setVideoSaveSuccess('تم تطبيق رابط الفيديو! يمكنك معاينته ثم الضغط على حفظ 🎬');
+    playClickSound();
+  };
+
+  const handleSaveStoryVideo = () => {
+    if (!videoUrlState) return;
+    playSparkleSound();
+    confetti({ particleCount: 60, spread: 70 });
+    try {
+      localStorage.setItem(`raed_story_video_${story.id}`, videoUrlState);
+    } catch {}
+    if (onUpdateStory) {
+      onUpdateStory({
+        ...story,
+        videoUrl: videoUrlState,
+      });
+    }
+    setVideoSaveSuccess('تم حفظ فيديو القصة بنجاح بقياس 16:09! 🎬🌟');
+    setTimeout(() => {
+      setShowOwnerVideoUploader(false);
+      setVideoSaveSuccess('');
+    }, 2000);
+  };
+
   const speakCurrentPage = () => {
     const textToSpeak = story.pages[currentPage]?.text || story.description;
     setIsSpeaking(true);
@@ -525,89 +591,252 @@ export const StoryModal: React.FC<StoryModalProps> = ({
             }}
           />
 
-          {/* Main Story Hero Artwork Banner */}
-          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/10] bg-slate-900 border border-white/20 group">
-            <img
-              src={imgError ? fallbackCover : (coverUrl || fallbackCover)}
-              alt={story.title}
-              onError={() => setImgError(true)}
-              className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-            />
+          {/* Media Mode Switcher (If 16:9 Video exists) */}
+          {videoUrlState && (
+            <div className="flex items-center justify-center p-1 rounded-2xl bg-black/40 border border-purple-500/40 gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  setActiveMediaMode('reader');
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeMediaMode === 'reader'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow'
+                    : 'text-purple-300 hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>قراءة القصة المصورة 📖</span>
+              </button>
 
-            {/* Direct Cover Change Button - STRICTLY RESTRICTED TO OWNER */}
-            {isOwnerAdmin && (
-              <div className="absolute top-3 left-3 z-20">
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsCoverPickerOpen(true);
-                  }}
-                  className="px-3 py-1.5 rounded-full text-xs font-black bg-black/80 hover:bg-amber-500 text-amber-300 hover:text-white backdrop-blur-md border border-amber-400/80 shadow-lg flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer ring-2 ring-amber-400/40"
-                  title="تخصيص واختيار غلاف القصة كمالكة للموقع 👑"
-                >
-                  <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
-                  <span>تغيير الغلاف (المالكة) 👑</span>
-                </button>
-              </div>
-            )}
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  setActiveMediaMode('video');
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeMediaMode === 'video'
+                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 shadow font-black'
+                    : 'text-purple-300 hover:text-white'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>مشاهدة الفيديو 16:09 🎬</span>
+              </button>
+            </div>
+          )}
 
-            {/* Story Title Overlay (Matching Attachment 1) */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-amber-400 text-lg">★</span>
-                    <h2 className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">
-                      {story.title}
-                    </h2>
-                  </div>
-                  <p className="text-sm text-yellow-200/90 font-medium">{story.subtitle}</p>
-                </div>
-                <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-600/80 text-white border border-purple-400/40">
-                  {story.categoryLabel}
-                </span>
+          {/* 16:9 Widescreen Cinema Video Player OR Artwork Banner */}
+          {activeMediaMode === 'video' && videoUrlState ? (
+            <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black border-2 border-amber-400/80 shadow-2xl group flex items-center justify-center">
+              <video
+                src={videoUrlState}
+                controls
+                playsInline
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute top-2.5 right-2.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur border border-amber-400/50 text-amber-300 text-xs font-black shadow flex items-center gap-1.5 pointer-events-none">
+                <span>🎬</span>
+                <span>فيديو سينمائي 16:09 عريض</span>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Main Story Hero Artwork Banner */
+            <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/10] bg-slate-900 border border-white/20 group">
+              <img
+                src={imgError ? fallbackCover : (coverUrl || fallbackCover)}
+                alt={story.title}
+                onError={() => setImgError(true)}
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+              />
 
-          {/* OWNER-ONLY AUDIO ATTACHMENT BOX */}
+              {/* Direct Cover Change Button - STRICTLY RESTRICTED TO OWNER */}
+              {isOwnerAdmin && (
+                <div className="absolute top-3 left-3 z-20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setIsCoverPickerOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-full text-xs font-black bg-black/80 hover:bg-amber-500 text-amber-300 hover:text-white backdrop-blur-md border border-amber-400/80 shadow-lg flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer ring-2 ring-amber-400/40"
+                    title="تخصيص واختيار غلاف القصة كمالكة للموقع 👑"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
+                    <span>تغيير الغلاف (المالكة) 👑</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Story Title Overlay (Matching Attachment 1) */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-amber-400 text-lg">★</span>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">
+                        {story.title}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-yellow-200/90 font-medium">{story.subtitle}</p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-600/80 text-white border border-purple-400/40">
+                    {story.categoryLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OWNER-ONLY EXCLUSIVE MEDIA STUDIO (فيديو 16:09 + تسجيل صوتي - خاص بمالكة الموقع hadjerrimas2016@gmail.com) */}
           {isOwnerAdmin && (
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/70 via-purple-950/70 to-amber-900/60 border-2 border-amber-400/70 shadow-lg space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/80 via-purple-950/80 to-amber-900/70 border-2 border-amber-400 shadow-xl space-y-3.5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
-                    <Music className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/25 border border-amber-400/60 flex items-center justify-center text-amber-300">
+                    <Film className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-amber-300 flex items-center gap-1">
-                      <span>إرفاق الملف الصوتي للقصة (خاص بمالكة الموقع)</span>
+                    <h4 className="text-xs sm:text-sm font-black text-amber-300 flex items-center gap-1">
+                      <span>لوحة نشر الوسائط للقصة (حصري لمالكة الموقع)</span>
                       <span>👑</span>
                     </h4>
                     <p className="text-[10px] text-amber-200/80">
-                      {audioUrlState ? '✅ يوجد ملف صوتي مرتبط بهذه القصة' : '⚠️ لم يتم إرفاق ملف صوتي بعد (يتم استخدام الراوي التلقائي)'}
+                      إرفاق فيديو عريض 16:09 وتسجيل صوتي رسمي خاص بك كمالكة للمنصة
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowOwnerAudioUploader(!showOwnerAudioUploader)}
-                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 text-xs font-black shadow transition-all hover:scale-105"
-                >
-                  {showOwnerAudioUploader ? 'إخفاء' : 'إرفاق صوت 🎵'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOwnerVideoUploader(!showOwnerVideoUploader);
+                      setShowOwnerAudioUploader(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black shadow transition-all cursor-pointer ${
+                      showOwnerVideoUploader
+                        ? 'bg-rose-500 text-white'
+                        : 'bg-amber-400 hover:bg-amber-300 text-amber-950'
+                    }`}
+                  >
+                    🎬 {showOwnerVideoUploader ? 'إغلاق الفيديو' : 'إرفاق فيديو 16:9'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOwnerAudioUploader(!showOwnerAudioUploader);
+                      setShowOwnerVideoUploader(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black shadow transition-all cursor-pointer ${
+                      showOwnerAudioUploader
+                        ? 'bg-rose-500 text-white'
+                        : 'bg-purple-600 hover:bg-purple-500 text-white'
+                    }`}
+                  >
+                    🎙️ {showOwnerAudioUploader ? 'إغلاق الصوت' : 'إرفاق صوت'}
+                  </button>
+                </div>
               </div>
 
-              {audioSaveSuccess && (
+              {/* Status Notice */}
+              {(videoSaveSuccess || audioSaveSuccess) && (
                 <div className="p-2.5 rounded-xl bg-emerald-500/30 border border-emerald-400 text-emerald-200 text-xs font-bold flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-300" />
-                  <span>{audioSaveSuccess}</span>
+                  <span>{videoSaveSuccess || audioSaveSuccess}</span>
                 </div>
               )}
 
+              {/* SECTION A: OWNER 16:9 VIDEO UPLOADER */}
+              {showOwnerVideoUploader && (
+                <div className="pt-3 border-t border-amber-400/30 space-y-3 text-xs animate-in fade-in duration-200 bg-black/40 p-3 rounded-2xl border border-amber-400/20">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-amber-300 flex items-center gap-1.5">
+                      <Video className="w-4 h-4 text-amber-400" />
+                      <span>إرفاق فيديو القصة بقياس 16:09 عريض:</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold">
+                      16:9 Widescreen
+                    </span>
+                  </div>
+
+                  {/* 1. File Upload from Owner's Device */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-200 mb-1">
+                      1. رفع ملف فيديو من جهازك (MP4, WebM, MOV):
+                    </label>
+                    <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-900/40 hover:bg-amber-900/60 border border-dashed border-amber-400/60 text-amber-200 font-bold cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-amber-400" />
+                      <span>اختيار ملف فيديو 16:9 من جهازك 📁🎬</span>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleOwnerVideoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* 2. Direct Link Input */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-200 mb-1">
+                      2. أو كتابة رابط مباشر لملف الفيديو (URL):
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        placeholder="https://example.com/story-video-16-9.mp4"
+                        value={customVideoInput}
+                        onChange={(e) => setCustomVideoInput(e.target.value)}
+                        className="flex-grow px-3 py-2 rounded-xl bg-black/60 border border-amber-400/40 text-white placeholder-white/40 text-xs focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyVideoUrl}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold border border-amber-400/50 cursor-pointer"
+                      >
+                        تطبيق
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3. Live 16:9 Video Preview & Save */}
+                  {videoUrlState && (
+                    <div className="p-3 rounded-xl bg-black/60 border border-amber-400/40 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black text-amber-300">معاينة الفيديو 16:09:</span>
+                        <span className="text-[10px] text-emerald-300 font-bold">✅ جاهز للاعتماد</span>
+                      </div>
+                      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-white/20">
+                        <video src={videoUrlState} controls className="w-full h-full object-contain" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveStoryVideo}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-amber-950 font-black text-xs shadow-lg flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>حفظ فيديو القصة 16:09 رسمياً في الموقع 💾🎬</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SECTION B: OWNER AUDIO UPLOADER */}
               {showOwnerAudioUploader && (
-                <div className="pt-2 border-t border-amber-400/30 space-y-3 text-xs animate-in fade-in duration-200">
+                <div className="pt-3 border-t border-amber-400/30 space-y-3 text-xs animate-in fade-in duration-200 bg-black/40 p-3 rounded-2xl border border-amber-400/20">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-amber-300 flex items-center gap-1.5">
+                      <Music className="w-4 h-4 text-amber-400" />
+                      <span>إرفاق التسجيل الصوتي الرسمي للقصة:</span>
+                    </span>
+                    <span className="text-[10px] text-amber-200">صوت الراوي الرسمي</span>
+                  </div>
+
                   {/* File Upload Option */}
                   <div>
                     <label className="block text-[11px] font-bold text-amber-200 mb-1">
@@ -625,7 +854,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
                     </label>
                   </div>
 
-                  {/* Or Direct Link Option */}
+                  {/* Direct Link Option */}
                   <div>
                     <label className="block text-[11px] font-bold text-amber-200 mb-1">
                       2. أو كتابة رابط مباشر لملف الصوت (URL):
@@ -636,12 +865,12 @@ export const StoryModal: React.FC<StoryModalProps> = ({
                         placeholder="https://example.com/audio.mp3"
                         value={customAudioInput}
                         onChange={(e) => setCustomAudioInput(e.target.value)}
-                        className="flex-grow px-3 py-2 rounded-xl bg-black/40 border border-amber-400/40 text-white placeholder-white/40 text-xs focus:outline-none focus:border-amber-400"
+                        className="flex-grow px-3 py-2 rounded-xl bg-black/60 border border-amber-400/40 text-white placeholder-white/40 text-xs focus:outline-none focus:border-amber-400"
                       />
                       <button
                         type="button"
                         onClick={handleApplyAudioUrl}
-                        className="px-3 py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold border border-amber-400/50"
+                        className="px-3 py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-bold border border-amber-400/50 cursor-pointer"
                       >
                         تطبيق
                       </button>
@@ -650,7 +879,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
 
                   {/* Current Audio Preview and Save */}
                   {audioUrlState && (
-                    <div className="p-2.5 rounded-xl bg-black/50 border border-amber-400/30 space-y-2">
+                    <div className="p-2.5 rounded-xl bg-black/60 border border-amber-400/30 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold text-amber-300">معاينة الصوت المرفق:</span>
                         <audio controls src={audioUrlState} className="h-7 max-w-[200px]" />
@@ -661,7 +890,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
                         className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-amber-950 font-black text-xs shadow-lg flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
                       >
                         <Check className="w-4 h-4" />
-                        <span>حفظ هذا التسجيل الصوتي للقصة في الموقع 💾</span>
+                        <span>حفظ هذا التسجيل الصوتي للقصة في الموقع 💾🎵</span>
                       </button>
                     </div>
                   )}

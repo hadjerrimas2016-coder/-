@@ -287,7 +287,43 @@ export const MyStoryCorner: React.FC<MyStoryCornerProps> = ({
     } catch {}
     confetti({ particleCount: 80, spread: 70 });
     onEarnStars(50);
-    alert('تم حفظ قصتك بنجاح في مكتبة قصصي! 🌟');
+    alert('تم حفظ قصتك بنجاح في مكتبة قصصي الخاصة! 🌟');
+  };
+
+  const handlePublishToReadingClub = () => {
+    if (!currentStory) return;
+    playFanfareSound();
+    confetti({ particleCount: 80, spread: 70 });
+    if (onSaveUserRecording) {
+      onSaveUserRecording({
+        id: `reading-club-story-${Date.now()}`,
+        storyId: `my-story-${Date.now()}`,
+        title: `قصة مؤلفة: ${currentStory.title}`,
+        audioBlobUrl: recordedAudioUrl || '',
+        audioUrl: recordedAudioUrl || '',
+        durationSec: recSeconds || 30,
+        createdAt: new Date().toLocaleDateString('ar-EG'),
+        scorePoints: 60,
+      });
+    }
+    try {
+      const existingRaw = localStorage.getItem('raed_reading_club_shared_stories') || '[]';
+      const existing = JSON.parse(existingRaw);
+      existing.unshift({
+        id: `shared-${Date.now()}`,
+        title: currentStory.title,
+        subtitle: currentStory.subtitle,
+        hero: currentStory.hero,
+        author: heroName || 'مؤلف صغير',
+        coverImage: storyCover,
+        audioBlobUrl: recordedAudioUrl || undefined,
+        text: currentStory.pages.map((p) => p.text).join(' '),
+        createdAt: new Date().toLocaleDateString('ar-EG'),
+      });
+      localStorage.setItem('raed_reading_club_shared_stories', JSON.stringify(existing));
+    } catch {}
+    onEarnStars(50);
+    alert('رائع يا بطل! تم نشر قصتك في "نادي القراءة 🎙️" ليسمعها ويقرأها أصدقاؤك! 🌟');
   };
 
   return (
@@ -582,23 +618,44 @@ export const MyStoryCorner: React.FC<MyStoryCornerProps> = ({
                   </button>
                 </div>
 
-                {/* Save Story Button */}
-                <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3">
-                  <button
-                    onClick={() => setActiveTab('illustrate')}
-                    className="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span>ارسم غلاف ومشاهدي 🎨</span>
-                  </button>
+                {/* Save Story & Publish Options */}
+                <div className="pt-3 border-t border-white/10 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    <button
+                      onClick={() => setActiveTab('illustrate')}
+                      className="px-4 py-2.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ImageIcon className="w-4 h-4 text-pink-400" />
+                      <span>ارسم غلاف ومشاهدي 🎨</span>
+                    </button>
 
-                  <button
-                    onClick={handleSaveToMyStories}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-black text-xs sm:text-sm shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>حفظ القصة في مكتبتي 💾 (+50 ⭐)</span>
-                  </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={handleSaveToMyStories}
+                        className="px-4 py-2.5 rounded-xl bg-purple-900/60 hover:bg-purple-900 border border-purple-400/40 text-purple-100 font-black text-xs shadow hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="حفظ القصة في مكتبتك الشخصية"
+                      >
+                        <Save className="w-4 h-4 text-amber-300" />
+                        <span>الاحتفاظ في مكتبتي الخاصة 📚</span>
+                      </button>
+
+                      <button
+                        onClick={handlePublishToReadingClub}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 text-white font-black text-xs shadow-lg shadow-pink-900/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="نشر القصة في نادي القراءة العام ليقرأها أصدقاؤك"
+                      >
+                        <Sparkles className="w-4 h-4 fill-current text-yellow-200" />
+                        <span>نشر في نادي القراءة 🎙️🌟 (+50 ⭐)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-black/40 border border-purple-500/30 text-[11px] text-purple-200/80 text-right flex items-center gap-2">
+                    <span className="text-amber-400">ℹ️</span>
+                    <span>
+                      تُحفظ القصص في مكتبتك الخاصة أو تُشارك مع أصدقائك في <strong>نادي القراءة 🎙️</strong>، بينما مكتبة الموقع الرسمية تحت إدارة مالكة المنصة حصرياً 👑.
+                    </span>
+                  </div>
                 </div>
               </div>
             ) : (

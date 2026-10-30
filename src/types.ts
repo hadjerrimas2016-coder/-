@@ -45,6 +45,7 @@ export interface Story {
   badge?: string;
   bannerImage?: string;
   coverImage: string;
+  audioUrl?: string; // Audio narration track for the story
   videoUrl?: string; // Optional video story (e.g. for cooking stories)
   ingredients?: { name: string; amount?: string; emoji?: string }[];
   recipeSteps?: string[];

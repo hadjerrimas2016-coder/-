@@ -28,7 +28,7 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { PictureBookModal } from './components/PictureBookModal';
 import { ReadingClub } from './components/ReadingClub';
 import { ForeignLanguagesCorner } from './components/ForeignLanguagesCorner';
-import { ShahrazadCorner } from './components/ShahrazadCorner';
+import { ShahrazadCorner, ARABIAN_NIGHTS_STORIES } from './components/ShahrazadCorner';
 import { SubscriptionUpgradeModal } from './components/SubscriptionUpgradeModal';
 import { AuthModal } from './components/AuthModal';
 import { CookingCorner } from './components/CookingCorner';
@@ -54,6 +54,11 @@ export default function App() {
   const [currentLang, setCurrentLang] = useState<SupportedLanguage>('ar');
   const [stories, setStories] = useState<Story[]>(() => {
     const list = [...STORIES_DATA];
+    for (const as of ARABIAN_NIGHTS_STORIES) {
+      if (!list.some((s) => s.id === as.id)) {
+        list.push(as);
+      }
+    }
     for (const cs of DEFAULT_COOKING_STORIES) {
       if (!list.some((s) => s.id === cs.id)) {
         list.push(cs);
@@ -115,6 +120,7 @@ export default function App() {
   const [openPictureBookPublisherDirect, setOpenPictureBookPublisherDirect] = useState<boolean>(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [showCarRacingGame, setShowCarRacingGame] = useState<boolean>(false);
 
   // Listen to Auth State
   useEffect(() => {
@@ -132,6 +138,11 @@ export default function App() {
         for (const defaultStory of STORIES_DATA) {
           if (!merged.some((s) => s.id === defaultStory.id)) {
             merged.push(defaultStory);
+          }
+        }
+        for (const arabianStory of ARABIAN_NIGHTS_STORIES) {
+          if (!merged.some((s) => s.id === arabianStory.id)) {
+            merged.push(arabianStory);
           }
         }
         for (const cookingStory of DEFAULT_COOKING_STORIES) {
@@ -527,6 +538,15 @@ export default function App() {
             onOpenSubscription={() => setShowSubscriptionModal(true)}
             isOwnerAdmin={isOwner}
             onUpdatePictureBook={handleSavePictureBook}
+            onOpenCarRacing={() => setShowCarRacingGame(true)}
+          />
+        )}
+
+        {currentTab === 'my_story' && (
+          <MyStoryCorner
+            mode={mode}
+            onEarnStars={handleEarnStars}
+            onSaveUserRecording={handleSaveUserRecording}
           />
         )}
 
@@ -585,6 +605,9 @@ export default function App() {
             onToggleFavorite={handleToggleFavorite}
             pictureBook={pictureBook}
             onOpenPictureBook={() => setShowPictureBook(true)}
+            isOwnerAdmin={isOwner}
+            onSaveStory={handleSaveAdminStory}
+            onUpdatePictureBook={handleSavePictureBook}
           />
         )}
 
@@ -620,6 +643,7 @@ export default function App() {
           <GamesCorner
             mode={mode}
             onEarnStars={handleEarnStars}
+            onOpenCarRacing={() => setShowCarRacingGame(true)}
           />
         )}
 
@@ -647,8 +671,17 @@ export default function App() {
           isFavorite={favorites.includes(activeStory.id)}
           onToggleFavorite={handleToggleFavorite}
           onSaveUserRecording={handleSaveUserRecording}
+          isOwnerAdmin={isOwner}
+          onUpdateStory={handleSaveAdminStory}
         />
       )}
+
+      {/* 3D Car Racing Game Modal (سباق سيارات الأبطال 3D 🏎️) */}
+      <CarRacingGameModal
+        isOpen={showCarRacingGame}
+        onClose={() => setShowCarRacingGame(false)}
+        onEarnStars={handleEarnStars}
+      />
 
       {/* Sleep Radio Modal (راديو النوم 🌙) */}
       {showSleepRadio && (
@@ -698,6 +731,8 @@ export default function App() {
           onClose={() => setShowStoryAuthoring(false)}
           onSaveStory={handleSaveAdminStory}
           onEarnStars={handleEarnStars}
+          isOwnerAdmin={isOwner}
+          onSaveUserRecording={handleSaveUserRecording}
         />
       )}
 
@@ -735,7 +770,8 @@ export default function App() {
           onDeleteBook={handleDeletePictureBook}
           onSaveUserRecording={handleSaveUserRecording}
           existingRecordings={userRecordings}
-          initialOpenPublisher={openPictureBookPublisherDirect}
+          initialOpenPublisher={isOwner && openPictureBookPublisherDirect}
+          isOwnerAdmin={isOwner}
         />
       )}
 

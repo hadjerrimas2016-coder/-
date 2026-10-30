@@ -142,6 +142,7 @@ interface PictureBookModalProps {
   onSaveUserRecording?: (recording: UserAudioRecording) => void;
   existingRecordings?: UserAudioRecording[];
   initialOpenPublisher?: boolean;
+  isOwnerAdmin?: boolean;
 }
 
 export const PictureBookModal: React.FC<PictureBookModalProps> = ({
@@ -156,6 +157,7 @@ export const PictureBookModal: React.FC<PictureBookModalProps> = ({
   onSaveUserRecording,
   existingRecordings = [],
   initialOpenPublisher = false,
+  isOwnerAdmin = false,
 }) => {
   // Safe Book reference
   const activeBook = book || DEFAULT_PICTURE_BOOK;
@@ -183,8 +185,8 @@ export const PictureBookModal: React.FC<PictureBookModalProps> = ({
   const [isPageGapWaiting, setIsPageGapWaiting] = useState<boolean>(false);
   const [gapCountdownSec, setGapCountdownSec] = useState<number>(0);
 
-  // Quick Publisher States
-  const [showQuickPublisher, setShowQuickPublisher] = useState<boolean>(initialOpenPublisher);
+  // Quick Publisher States - Accessible ONLY to Owner
+  const [showQuickPublisher, setShowQuickPublisher] = useState<boolean>(initialOpenPublisher && Boolean(isOwnerAdmin));
   const [publisherTab, setPublisherTab] = useState<'editPage' | 'pasteFullBook' | 'audioStudio'>('editPage');
   const [batchFullText, setBatchFullText] = useState<string>('');
   const [isSavingCloud, setIsSavingCloud] = useState<boolean>(false);
@@ -976,23 +978,25 @@ export const PictureBookModal: React.FC<PictureBookModalProps> = ({
               <span>مكتبة القصص ({allBooks.length})</span>
             </button>
 
-            {/* Quick Publisher Action */}
-            <button
-              onClick={() => {
-                playClickSound();
-                setShowQuickPublisher(!showQuickPublisher);
-                setShowBookLibrary(false);
-              }}
-              className={`px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 shadow transition-all cursor-pointer ${
-                showQuickPublisher
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 hover:brightness-110 active:scale-95'
-              }`}
-              title="محرر ونشر صفحات الكتاب واستوديو الصوت الفوري"
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>{showQuickPublisher ? 'إغلاق النشر' : 'نشر وتعديل ✍️'}</span>
-            </button>
+            {/* Quick Publisher Action - STRICTLY RESTRICTED TO PLATFORM OWNER */}
+            {isOwnerAdmin && (
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setShowQuickPublisher(!showQuickPublisher);
+                  setShowBookLibrary(false);
+                }}
+                className={`px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 shadow transition-all cursor-pointer ${
+                  showQuickPublisher
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-amber-950 hover:brightness-110 active:scale-95'
+                }`}
+                title="محرر ونشر صفحات الكتاب واستوديو الصوت الفوري (خاص بمالكة المنصة فقط) 👑"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>{showQuickPublisher ? 'إغلاق النشر' : 'نشر وتعديل ✍️ (المالكة) 👑'}</span>
+              </button>
+            )}
 
             <button
               onClick={() => {
@@ -1017,30 +1021,34 @@ export const PictureBookModal: React.FC<PictureBookModalProps> = ({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs sm:text-sm font-black text-amber-300 flex items-center gap-1.5">
                 <Library className="w-4 h-4 text-amber-400" />
-                <span>مكتبة القصص المصورة 📚 (يمكنك إنشاء وتصفح عدد غير محدود من القصص):</span>
+                <span>مكتبة القصص المصورة 📚</span>
               </span>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleOpenBookCoverPicker}
-                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-black text-xs flex items-center gap-1.5 shadow border border-purple-400/40 cursor-pointer"
-                  title="تخصيص واختيار غلاف هذه القصة المصورة"
-                >
-                  <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
-                  <span>تغيير غلاف الكتاب 🖼️</span>
-                </button>
+                {isOwnerAdmin && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleOpenBookCoverPicker}
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-black text-xs flex items-center gap-1.5 shadow border border-purple-400/40 cursor-pointer"
+                      title="تخصيص واختيار غلاف هذه القصة المصورة (خاص بالمالكة)"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
+                      <span>تغيير غلاف الكتاب 🖼️</span>
+                    </button>
 
-                <button
-                  onClick={() => {
-                    playSparkleSound();
-                    setShowNewBookModal(true);
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-900/40 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ تأليف وإنشاء قصة جديدة ✍️</span>
-                </button>
+                    <button
+                      onClick={() => {
+                        playSparkleSound();
+                        setShowNewBookModal(true);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-900/40 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>+ إنشاء قصة جديدة ✍️</span>
+                    </button>
+                  </>
+                )}
 
                 <button
                   onClick={handleResetToDefaultBook}
@@ -1512,15 +1520,17 @@ export const PictureBookModal: React.FC<PictureBookModalProps> = ({
 
               {/* Controls Overlay on Image (Top-Left) */}
               <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleOpenPageImagePicker}
-                  className="px-2.5 py-1.5 rounded-full text-[11px] font-black bg-pink-600/95 hover:bg-pink-500 text-white border border-pink-300/40 backdrop-blur-md shadow-lg flex items-center gap-1 transition-all cursor-pointer hover:scale-105"
-                  title="تغيير واختيار صورة هذه الصفحة"
-                >
-                  <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
-                  <span>تغيير صورة الصفحة 🖼️</span>
-                </button>
+                {isOwnerAdmin && (
+                  <button
+                    type="button"
+                    onClick={handleOpenPageImagePicker}
+                    className="px-2.5 py-1.5 rounded-full text-[11px] font-black bg-pink-600/95 hover:bg-pink-500 text-white border border-pink-300/40 backdrop-blur-md shadow-lg flex items-center gap-1 transition-all cursor-pointer hover:scale-105"
+                    title="تغيير واختيار صورة هذه الصفحة (خاص بمالكة الموقع) 👑"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
+                    <span>تغيير صورة الصفحة 🖼️ (المالكة 👑)</span>
+                  </button>
+                )}
 
                 <button
                   type="button"
