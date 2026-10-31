@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Story, AppMode } from '../types';
 import { StoryCard } from './StoryCard';
+import { InteractiveAlphabetGarden } from './InteractiveAlphabetGarden';
 import {
   Globe,
   Sparkles,
@@ -194,6 +195,12 @@ export const ForeignLanguagesCorner: React.FC<ForeignLanguagesCornerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Interactive Alphabet Garden with Delightful Touch Effects (حديقة الحروف التفاعلية 🔤✨) */}
+      <InteractiveAlphabetGarden
+        mode={mode}
+        onEarnStars={onEarnStars}
+      />
 
       {/* Interactive Daily Vocabulary Flashcards */}
       <div className="space-y-3">

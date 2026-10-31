@@ -9,6 +9,7 @@ import { STORIES_DATA } from './data/storiesData';
 import { DEFAULT_PICTURE_BOOK, PRESET_PICTURE_BOOKS } from './data/pictureBooksData';
 import { DEFAULT_SUNNAH_ITEMS } from './data/sunnahData';
 import { SunnahCorner } from './components/SunnahCorner';
+import { ReligiousStoriesCorner } from './components/ReligiousStoriesCorner';
 import { SkyBackground } from './components/SkyBackground';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
@@ -36,6 +37,7 @@ import { DEFAULT_COOKING_STORIES } from './data/cookingStoriesData';
 import { MyStoryCorner } from './components/MyStoryCorner';
 import { CarRacingGameModal } from './components/CarRacingGameModal';
 import { CookingGameModal } from './components/CookingGameModal';
+import { CinemaCorner } from './components/CinemaCorner';
 import { playSparkleSound } from './utils/audio';
 import {
   auth,
@@ -511,11 +513,31 @@ export default function App() {
 
       {/* Dynamic Main Views */}
       <main className="transition-opacity duration-300">
+        {currentTab === 'religious_stories' && (
+          <ReligiousStoriesCorner
+            items={sunnahItems}
+            mode={mode}
+            onAddStar={() => handleEarnStars(5)}
+            onOpenPictureBook={(targetBook) => {
+              if (targetBook) {
+                setPictureBook(targetBook);
+                setShowPictureBook(true);
+              } else {
+                setOpenPictureBookPublisherDirect(true);
+                setShowPictureBook(true);
+              }
+            }}
+            isOwnerAdmin={isOwner}
+            onSaveUserRecording={handleSaveUserRecording}
+            existingRecordings={userRecordings}
+          />
+        )}
         {currentTab === 'sunnah' && (
           <SunnahCorner
             items={sunnahItems}
             mode={mode}
             onAddStar={() => handleEarnStars(5)}
+            isOwnerAdmin={isOwner}
           />
         )}
         {currentTab === 'home' && (
@@ -542,6 +564,14 @@ export default function App() {
             onUpdatePictureBook={handleSavePictureBook}
             onOpenCarRacing={() => setShowCarRacingGame(true)}
             onOpenCookingGame={() => setShowCookingGame(true)}
+          />
+        )}
+
+        {currentTab === 'cinema' && (
+          <CinemaCorner
+            mode={mode}
+            onEarnStars={handleEarnStars}
+            isOwnerAdmin={isOwner}
           />
         )}
 

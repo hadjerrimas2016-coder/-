@@ -2,6 +2,7 @@ export type AppMode = 'day' | 'night';
 
 export type ActiveTab = 
   | 'home' 
+  | 'cinema'
   | 'cooking'
   | 'reading_club'
   | 'foreign_languages'
@@ -9,6 +10,7 @@ export type ActiveTab =
   | 'my_story'
   | 'library'
   | 'games'
+  | 'religious_stories'
   | 'sunnah'
   | 'challenges' 
   | 'memorize' 
@@ -37,6 +39,7 @@ export interface Story {
     | 'languages'
     | 'foreign_languages'
     | 'cooking'
+    | 'religious_stories'
     | 'sunnah';
   categoryLabel: string;
   categoryIcon: string;
@@ -263,5 +266,22 @@ export interface ReadingClubStory {
     text: string;
     createdAt: string;
   }[];
+}
+
+export interface CinemaMovie {
+  id: string;
+  title: string;
+  description: string;
+  duration: string; // e.g. "12 دقيقة"
+  category: string; // e.g. "مغامرة كرتونية"
+  videoUrl: string; // YouTube URL or direct MP4/WebM
+  coverImage: string; // Movie poster
+  ageRating: string; // e.g. "جميع الأعمار 🌟"
+  starsReward: number; // e.g. 30
+  rating?: number;
+  likesCount?: number;
+  featured?: boolean;
+  directorNote?: string;
+  addedByOwner?: boolean;
 }
 

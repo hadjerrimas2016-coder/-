@@ -59,7 +59,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     ownerPortal: 'لوحة المالك والنشر 👑',
     myAccount: 'حسابي',
     homeTab: 'الرئيسية',
-    sunnahTab: 'ركن السُنّة (أدعية وسور)',
+    sunnahTab: 'قصص دينية وأدعية 🕌📖',
     challengesTab: 'خريطة التحديات',
     libraryTab: 'مكتبة القصص',
     gamesTab: 'ركن الألعاب',

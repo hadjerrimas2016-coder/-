@@ -567,7 +567,7 @@ export const CATEGORIES_LIST = [
   { id: 'all', label: 'جميع القصص والمغامرات', icon: '🌟', color: 'from-amber-400 to-orange-500' },
   { id: 'cooking', label: 'قصص الطبخ والمطبخ الممتع 👨‍🍳🍲', icon: '🍲', color: 'from-amber-500 to-rose-600' },
   { id: 'foreign_languages', label: 'قصص باللغات الأجنبية 🌍', icon: '🌍', color: 'from-emerald-500 to-teal-600' },
-  { id: 'sunnah', label: 'ركن السُنّة النبوية (سور وأدعية)', icon: '🕌', color: 'from-emerald-600 to-teal-700' },
+  { id: 'religious_stories', label: 'القصص الدينية المصورة والصوتية 🕌📖', icon: '🕌', color: 'from-emerald-600 to-teal-700' },
   { id: 'shahrazad', label: 'عالم شهرزاد (ألف ليلة وليلة)', icon: '👸', color: 'from-purple-500 to-indigo-600' },
   { id: 'heritage', label: 'كنوز التراث والشعبيات', icon: '📜', color: 'from-amber-600 to-yellow-600' },
   { id: 'knowledge', label: 'مستكشفو المعرفة والعلوم', icon: '🚀', color: 'from-blue-500 to-cyan-500' },

@@ -14,7 +14,8 @@ import {
   Crown,
   UtensilsCrossed,
   Trophy,
-  PenTool
+  PenTool,
+  Film
 } from 'lucide-react';
 import { playClickSound } from '../utils/audio';
 
@@ -28,6 +29,7 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ currentTab, onSelectTab, mode }) => {
   const tabs = [
     { id: 'home' as ActiveTab, label: 'الرئيسية', icon: Home },
+    { id: 'cinema' as ActiveTab, label: 'سينما رائد 🎬🍿', icon: Film, badge: 'جديد' },
     { id: 'my_story' as ActiveTab, label: 'ركن قصتي 📖✨', icon: PenTool, badge: 'AI' },
     { id: 'challenges' as ActiveTab, label: 'خريطة التحديات 🎯', icon: Trophy, badge: '3D' },
     { id: 'cooking' as ActiveTab, label: 'قصص الطبخ 🍲', icon: UtensilsCrossed, badge: 'فيديو' },
@@ -36,7 +38,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentTab, onSelectTab,
     { id: 'foreign_languages' as ActiveTab, label: 'قصص باللغات 🌍', icon: Globe },
     { id: 'library' as ActiveTab, label: 'المكتبة', icon: BookOpen },
     { id: 'games' as ActiveTab, label: 'الألعاب 🎮', icon: Gamepad2 },
-    { id: 'sunnah' as ActiveTab, label: 'ركن السُنّة 🕌', icon: Sparkles },
+    { id: 'religious_stories' as ActiveTab, label: 'قصص دينية 📖', icon: BookOpen, badge: 'مصوّرة' },
+    { id: 'sunnah' as ActiveTab, label: 'ركن السُنّة وصلاتي 🕌', icon: Sparkles, badge: 'صلاتي' },
     { id: 'profile' as ActiveTab, label: 'حسابي ⭐', icon: User },
   ];
 

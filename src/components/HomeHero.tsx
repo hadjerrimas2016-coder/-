@@ -456,16 +456,41 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
                 <Play className="w-4 h-4 fill-current" />
               </button>
 
-              {/* Sunnah Corner Button */}
+              {/* Religious Stories Corner Button */}
+              <button
+                onClick={() => {
+                  playSparkleSound();
+                  onSelectTab('religious_stories');
+                }}
+                className="px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-900/40 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-emerald-400/40"
+              >
+                <span>📖</span>
+                <span>القصص الدينية المصورة</span>
+              </button>
+
+              {/* Sunnah Corner & Salati Button */}
               <button
                 onClick={() => {
                   playSparkleSound();
                   onSelectTab('sunnah');
                 }}
-                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-900/40 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-emerald-400/40"
+                className="px-4 py-3 rounded-2xl bg-gradient-to-r from-teal-700 to-emerald-800 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer border border-amber-300/40"
               >
-                <span>🕌</span>
-                <span>ركن السُنّة النبوية</span>
+                <span>🧎‍♂️</span>
+                <span>ركن السُنّة وخاصية «صلاتي» 🕌</span>
+              </button>
+
+              {/* Cinema Raed Button matching Attachment 1 */}
+              <button
+                onClick={() => {
+                  playSparkleSound();
+                  onSelectTab('cinema');
+                }}
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-red-950/60 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-amber-300/60"
+              >
+                <span className="text-base">🍿</span>
+                <span>سينما رائد التفاعلية ✨</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-yellow-400 text-red-950 text-[10px] font-black">جديد</span>
               </button>
 
               {/* My Story AI Corner Button */}
@@ -653,6 +678,27 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
 
       {/* Primary Feature Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card Cinema: سينما رائد التفاعلية (Crimson Red with Popcorn) */}
+        <div
+          onClick={() => {
+            playSparkleSound();
+            onSelectTab('cinema');
+          }}
+          className="group rounded-3xl p-4 border border-red-500/60 bg-gradient-to-tr from-[#38040a] to-[#220206] text-white shadow-xl cursor-pointer transition-all hover:-translate-y-1 hover:border-amber-400 flex items-center justify-between ring-1 ring-red-400/30"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-[10px] text-yellow-300 font-bold">
+              <span>أفلام 3D</span>
+              <span>🍿</span>
+            </div>
+            <h3 className="font-black text-sm sm:text-base text-amber-300">سينما رائد</h3>
+            <p className="text-[11px] text-red-200/80">أفلام كرتون وتذاكر مرح 🎬</p>
+          </div>
+          <div className="w-10 h-10 rounded-2xl bg-red-600/30 text-amber-300 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-inner border border-red-400/40">
+            <span>🍿</span>
+          </div>
+        </div>
+
         {/* Card: نادي القراءة والمكتبات الصوتية (Purple) */}
         <div
           onClick={() => {
@@ -694,24 +740,45 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             <Globe className="w-5 h-5 text-emerald-300" />
           </div>
         </div>
-        {/* Card Sunnah: ركن السُنّة (Emerald) */}
+        {/* Card: ركن القصص الدينية الإسلامية 🕌📖 */}
         <div
           onClick={() => {
             playSparkleSound();
-            onSelectTab('sunnah');
+            onSelectTab('religious_stories');
           }}
           className="group rounded-3xl p-4 border border-emerald-500/50 bg-gradient-to-tr from-[#082419] to-[#103a28] text-white shadow-lg cursor-pointer transition-all hover:-translate-y-1 hover:border-emerald-300 flex items-center justify-between ring-1 ring-emerald-400/30"
         >
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-[10px] text-amber-300 font-bold">
-              <span>جديد</span>
-              <span>🕌</span>
+              <span>مصوّرة وصوتية</span>
+              <span>📖✨</span>
             </div>
-            <h3 className="font-black text-sm sm:text-base text-emerald-300">ركن السُنّة</h3>
-            <p className="text-[11px] text-emerald-100/70">سور قصيرة وأدعية 🤲</p>
+            <h3 className="font-black text-sm sm:text-base text-emerald-300">القصص الدينية 📖</h3>
+            <p className="text-[11px] text-emerald-100/70">كتب مصورة وروايات صوتية تفاعلية</p>
           </div>
           <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-inner">
-            <span>🕌</span>
+            <span>📖</span>
+          </div>
+        </div>
+
+        {/* Card: ركن السُنّة وخاصية صلاتي 🕌🧎‍♂️ */}
+        <div
+          onClick={() => {
+            playSparkleSound();
+            onSelectTab('sunnah');
+          }}
+          className="group rounded-3xl p-4 border border-teal-500/50 bg-gradient-to-tr from-[#06241a] to-[#0d3b2b] text-white shadow-lg cursor-pointer transition-all hover:-translate-y-1 hover:border-amber-300 flex items-center justify-between ring-1 ring-amber-400/30"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-[10px] text-amber-300 font-bold">
+              <span>خاصية جديدة</span>
+              <span>🧎‍♂️✨</span>
+            </div>
+            <h3 className="font-black text-sm sm:text-base text-amber-300">السُنّة وصلاتي 🕌</h3>
+            <p className="text-[11px] text-emerald-100/70">تعليم الصلاة بالصور والأذكار 📿</p>
+          </div>
+          <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-amber-300 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-inner">
+            <span>🧎‍♂️</span>
           </div>
         </div>
 

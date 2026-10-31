@@ -58,6 +58,17 @@ export interface IllustrationCategory {
 
 export const CURATED_ILLUSTRATION_CATEGORIES: IllustrationCategory[] = [
   {
+    category: 'القصص الدينية والمساجد 🕌',
+    icon: '🕌',
+    items: [
+      { id: 'jumuah-mosque-path', title: 'يوم الجمعة والمسير للمسجد', url: '/assets/aistudio/Capture_d__cran_2026-10-20_135742_9bb46748.png' },
+      { id: 'jumuah-father-son', title: 'الأب والابن في باحة المسجد', url: '/assets/aistudio/Capture_d__cran_2026-10-20_135700_a8f3d8ee.png' },
+      { id: 'quran-reading', title: 'تلاوة القرآن وسورة الكهف', url: '/assets/aistudio/image_2026-10-20_135936230_89e4c091.png' },
+      { id: 'islamic-courtyard', title: 'الساحة الإسلامية والأقواس', url: '/assets/aistudio/Capture_d__cran_2026-10-17_165435_21ae23c9.png' },
+      { id: 'minaret-sky', title: 'المآذن والقباب تحت أشعة الشمس', url: '/assets/aistudio/Capture_d__cran_2026-10-17_165411_ea7c3f60.png' }
+    ]
+  },
+  {
     category: 'رائد والفضاء والنجوم 🚀',
     icon: '🚀',
     items: [
